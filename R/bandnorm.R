@@ -153,11 +153,10 @@ bandnorm_juicer = function(path = NULL, resolution, pairs, save = TRUE, save_pat
     cell = readJuicer(file = paths[i], pairs = pairs, unit = "BP", resolution = 1000000)
     chr = strsplit(pairs, split = "_")
     clean_cell = function(k) {
+      temp = as.data.frame(cell$contact[[pairs[k]]])
       n = nrow(cell$contact[[pairs[k]]])
-      return(as.data.frame(cell$contact[[pairs[k]]]) %>%
-               mutate(chromA = rep(paste("chr", chr[[k]][1], sep = ""),
-                                 n)) %>%
-               select(chromA, x, y, counts) %>% rename(chrom = chromA, binA = x, binB = y, count = counts))
+      temp$chromA = rep(paste("chr", chr[[k]][1], sep = ""), n)
+      return(temp %>% select(chromA, x, y, counts) %>% rename(chrom = chromA, binA = x, binB = y, count = counts))
     }
     return(rbindlist(lapply(1:length(chr), clean_cell)) %>%
       mutate(diag = abs(binB - binA), cell = names[i]))
