@@ -150,7 +150,7 @@ bandnorm_juicer = function(path = NULL, resolution, pairs, save = TRUE, save_pat
   names = basename(list.files(path, recursive = TRUE))
   names = gsub(".hic", ".txt", names)
   load_cell = function(i) {
-    cell = readJuicer(file = paths[i], pairs = pairs, unit = "BP", resolution = 1000000)
+    cell = readJuicer(file = paths[i], pairs = pairs, unit = "BP", resolution = resolution)
     chr = strsplit(pairs, split = "_")
     clean_cell = function(k) {
       temp = as.data.frame(cell$contact[[pairs[k]]])
