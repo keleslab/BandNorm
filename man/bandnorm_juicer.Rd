@@ -2,7 +2,7 @@
 % Please edit documentation in R/bandnorm.R
 \name{bandnorm_juicer}
 \alias{bandnorm_juicer}
-\title{Juicer hic version of BandNorm}
+\title{Juicer .hic version of BandNorm}
 \usage{
 bandnorm_juicer(path = NULL, resolution, pairs, save = TRUE, save_path = NULL)
 }

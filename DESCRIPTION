@@ -23,7 +23,11 @@ Depends:
     umap,
     progress,
     harmony,
-    FreeHiCLite
+    FreeHiCLite,
+    Matrix,
+    gmodels,
+    doParallel,
+    foreach
 RoxygenNote: 7.1.1
 Suggests: 
     knitr,
