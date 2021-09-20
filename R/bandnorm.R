@@ -99,8 +99,8 @@ bandnorm = function(path = NULL, hic_df = NULL, save = TRUE, save_path = NULL) {
   alpha_j <- band_info %>% group_by(chrom, diag) %>% summarise(depth = mean(band_depth))
 
   hic_df <- hic_df %>% left_join(alpha_j, by = c("chrom", "diag")) %>% left_join(band_info,
-                                                                                 by = c("chrom", "diag", "cell")) %>% mutate(BandNorm = ifelse(diag == 0,
-                                                                                 count, count/band_depth * depth)) %>% select(-c(band_depth, depth, count))
+                                                                                 by = c("chrom", "diag", "cell")) %>% mutate(BandNorm = count/band_depth * depth) %>% 
+  select(-c(band_depth, depth, count))
   if (save) {
     save_path = file.path(save_path, unique(names))
     for (i in 1:length(unique(names))) {
@@ -167,8 +167,8 @@ bandnorm_juicer = function(path = NULL, resolution, pairs, save = TRUE, save_pat
   alpha_j <- band_info %>% group_by(chrom, diag) %>% summarise(depth = mean(band_depth))
 
   hic_df <- hic_df %>% left_join(alpha_j, by = c("chrom", "diag")) %>% left_join(band_info,
-                                                                                 by = c("chrom", "diag", "cell")) %>% mutate(BandNorm = ifelse(diag == 0,
-                                                                                 count, count/band_depth * depth)) %>% select(-c(band_depth, depth, count))
+                                                                                 by = c("chrom", "diag", "cell")) %>% mutate(BandNorm = count/band_depth * depth) %>% 
+  select(-c(band_depth, depth, count))
   if (save) {
     save_path = file.path(save_path, unique(names))
     for (i in 1:length(unique(names))) {
