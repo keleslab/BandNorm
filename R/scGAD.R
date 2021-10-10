@@ -1,44 +1,64 @@
-#' Performing GAD for each single-cell data
+#' Performing scGAD for each single-cell data
 #'
 #' This function allows you to calculate GAD value for each gene in each cell.
 #' @param path A path to the single-cell Hi-C data. The data format should be the same as bandnorm input.
+#' @param hic_df You can also load dataframe containing all Hi-C data to here, but it is not recommended, since in scGAD, we are dealing with high resolution matrices, and it will consume a lot of memory if we load it directly.
 #' @param genes A data frame containing 4 columns: chrmomsome, start, end, gene name.
 #' @param cores Number of cores used for parallel running. Default is 10.
-#' @param output The path for outputting scGAD. Each file contains two columns: gene name and gad value.
+#' @param depthNorm Whether to normalize the sequencing depth effect. Default is TRUE.
 #' @export
 #' @examples
 #' #
 
-scGAD = function(path, genes, cores = 10, output){
-  colnames(genes) = c("chr", "s1", "s2", "gene_name")
-  cl <- makeCluster(cores[1])
-  registerDoParallel(cl)
-  names = list.files(path)
-  output = foreach(k=1:length(names), .packages=c("dplyr", "data.table")) %dopar% {
+scGAD = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 25){
+  discardCounts = max(genes$s2 - genes$s1)
+
+  if (is.null(hic_df)){
+    cl <- makeCluster(cores[1])
+    registerDoParallel(cl)
+    names = list.files(path)
     paths = list.files(path, full.names = TRUE)
-    cell = fread(paths[k])
-    gad_score = matrix(0, nrow = nrow(genes), ncol = 2)
-    for (i in 1:nrow(genes)){
-      temp = cell[V1 == genes[i, ]$chr, ]
-      gene_pos = temp[V2 >= genes[i, ]$s1 &
-                        V2 <= genes[i, ]$s2 &
-                        V4 >= genes[i, ]$s1 &
-                        V4 <= genes[i, ]$s2, ]
-
-      up = temp[V2 >= genes[i, ]$s2 &
-                  V2 <= (genes[i, ]$s2 + genes[i, ]$s2 - genes[i, ]$s1 + 1) &
-                  V4 >= genes[i, ]$s2 &
-                  V4 <= (genes[i, ]$s2 + genes[i, ]$s2 - genes[i, ]$s1 + 1), ]
-
-      down = temp[V2 >= (genes[i, ]$s1 - genes[i, ]$s2 + genes[i, ]$s1) &
-                    V2 <= genes[i, ]$s1 &
-                    V4 >= (genes[i, ]$s1 - genes[i, ]$s2 + genes[i, ]$s1) &
-                    V4 <= genes[i, ]$s1, ]
-
-      gad_score[i, ] = c(genes[i, ]$gene_name, ((2 * sum(gene_pos$V5)) / (sum(up$V5) + sum(down$V5))))
+    output = foreach(k=1:length(names), .packages=c("dplyr", "data.table"), .combine = 'cbind') %dopar% {
+      cell = fread(paths[k])
+      cell = cell[abs(cell$V4 - cell$V2) <= discardCounts, ]
+      gad_score = rep(NA, nrow(genes))
+      for (i in 1:nrow(genes)){
+        temp = cell[V1 == genes[i, ]$chr, ]
+        gad_score[i] = sum(temp[V2 >= genes[i, ]$s1 - 10000 &
+                                  V2 <= genes[i, ]$s2 &
+                                  V4 >= genes[i, ]$s1 - 10000 &
+                                  V4 <= genes[i, ]$s2, ]$V5)
+      }
+      gad_score
     }
-    write.table(gad_score, file = paste(output, "/", names[k], sep = ""),
-                row.names = FALSE, col.names = FALSE, quote = FALSE, sep = "\t")
+  } else{
+    names = unique(hic_df$cell)
+    output = c()
+    for (i in 1:length(names)){
+      tempcell = hic_df[hic_df$cell == names[i], ]
+      tempcell = tempcell[abs(tempcell$binA - tempcell$binB) <= discardCounts, ]
+      gad_score = rep(NA, nrow(genes))
+      for (i in 1:nrow(genes)){
+        temp = tempcell[tempcell$chrom == genes[i, ]$chr, ]
+        gad_score[i] = sum(temp[temp$binA >= genes[i, ]$s1 - 10000 &
+                                  temp$binA <= genes[i, ]$s2 &
+                                  temp$binB >= genes[i, ]$s1 - 10000 &
+                                  temp$binB <= genes[i, ]$s2, ]$count)
+      }
+      output = cbind(output, gad_score)
+    }
   }
+
+  colnames(output) = names
+  rownames(output) = genes$gene_name
+  
+  if (depthNorm) {
+    output = t(t(output) / colSums(output)) * 1e04
+  }
+  GAD = (output - rowMeans(output))/sqrt(rowVars(output))
+  GAD
 }
+
+
+
 

@@ -1,0 +1,69 @@
+---
+title: "scGAD-tutorial"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{scGAD-tutorial}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Introduction
+
+Recent advancements in single-cell technologies enabled the profiling of 3D genome structures in a single-cell fashion. Quantitative tools are needed to fully leverage the unprecedented resolution of single-cell high-throughput chromatin conformation (scHi-C) data and integrate it with other single-cell data modalities. We developed single-cell gene-body associating domain (scGAD) scores available in R package to explore scHi-C data in units of genes. Proper normalization is investigated to eliminate technical biases.
+
+## Installation
+
+The installation is the same as `BandNorm`, since scGAD is included in this package.
+
+## Format of input
+
+We currently allows two ways input the data:
+
+A path containing all cells in the form of [chr1, binA, chr2, binB, count], the cell looks like below:
+
+```
+chr1    0   chr1    10000 9
+chr1    10000   chr1    10000 20
+chr1    0   chr1    20000 2
+chr1    10000 chr1    20000 4
+chr1    20000 chr1    20000 22
+chr1    10000 chr1    30000 1
+chr1    20000 chr1    30000 11
+chr1    30000 chr1    30000 197
+chr1    10000 chr1    40000 1
+chr1    20000 chr1    40000 2
+```
+
+Another way is to input a data.frame containing all interactions and the column is like [chr1, binA, binB, count, cell_name]. This way is not recommended, since single-cell Hi-C data is huge. However, it will be fast if your computer can handle the data in this way.
+
+The data should be 10kb resolution. We will allow more formats to be used here, and we will try to allow higher resolution.
+
+For the example dataset, we also have batch information and cell-type information. Note that the cell_name in those external information should be consistent with the hic_df file.
+
+## Use scGAD
+
+We provide a demo scHi-C data named hic_df, sampled 100 cells of Mature Oligodendrocyte, Microglia Etc. and Hippocampal Granule Cell, three cell types and chromosome 1 from [Tan2021](https://www.cell.com/cell/fulltext/S0092-8674(20)31754-2?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS0092867420317542%3Fshowall%3Dtrue) for test run. After obtaining the hic_df file, you can use the `scGAD` function to normalize the data and obtain the scGAD score. The result is similar to scRNAseq, where what you can get is a matrix that rows are genes, and columns are cells.
+
+```{r scGAD}
+library(BandNorm)
+data(scGADExample)
+gad_score = scGAD(hic_df = scgad_df, genes = geneANNO, depthNorm = TRUE)
+```
+
+Then, you can use PCA to look at the result, and cells are clearly separated.
+
+```{r PCA Result}
+library(ggplot2)
+summary = summary[match(colnames(gad_score), summary$cell), ]
+gadPCA = prcomp(gad_score)$rotation[, 1:15]
+gadPCA = data.frame(gadPCA, cellTypes = summary$`cell-type cluster`)
+ggplot(gadPCA, aes(x = PC1, y = PC2, col = cellTypes)) + geom_point() + theme_bw(base_size = 10)
+```
+

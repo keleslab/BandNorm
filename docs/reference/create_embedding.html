@@ -107,6 +107,9 @@
     <li>
       <a href="../articles/BandNorm-tutorial.html">BandNorm-tutorial</a>
     </li>
+    <li>
+      <a href="../articles/scGAD-tutorial.html">scGAD-tutorial</a>
+    </li>
   </ul>
 </li>
       </ul>
@@ -141,7 +144,8 @@
   var_thres <span class='op'>=</span> <span class='fl'>0</span>,
   dim_pca <span class='op'>=</span> <span class='fl'>50</span>,
   do_harmony <span class='op'>=</span> <span class='cn'>FALSE</span>,
-  batch <span class='op'>=</span> <span class='cn'>NULL</span>
+  batch <span class='op'>=</span> <span class='cn'>NULL</span>,
+  band_select <span class='op'>=</span> <span class='st'>"all"</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -175,6 +179,10 @@
       <th>batch</th>
       <td><p>The batch information used for Harmony to remove the batch effect. Required if do_harmony is TRUE.</p></td>
     </tr>
+    <tr>
+      <th>band_select</th>
+      <td><p>Choose how faraway the band you need. Default is "all", and it can range from 1 to the number of bins times the resolution.</p></td>
+    </tr>
     </table>
 
 
@@ -183,7 +191,7 @@
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='st'>"batch"</span><span class='op'>)</span>
 <span class='va'>bandnorm_result</span> <span class='op'>=</span> <span class='fu'><a href='bandnorm.html'>bandnorm</a></span><span class='op'>(</span>hic_df <span class='op'>=</span> <span class='va'>hic_df</span>, save <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span>
 <span class='va'>embedding</span> <span class='op'>=</span> <span class='fu'>create_embedding</span><span class='op'>(</span>hic_df <span class='op'>=</span> <span class='va'>bandnorm_result</span>, do_harmony <span class='op'>=</span> <span class='cn'>TRUE</span>, batch <span class='op'>=</span> <span class='va'>batch</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; <span class='message'>Harmony 1/10</span></div><div class='output co'>#&gt; <span class='message'>Harmony 2/10</span></div><div class='output co'>#&gt; <span class='message'>Harmony 3/10</span></div><div class='output co'>#&gt; <span class='message'>Harmony 4/10</span></div><div class='output co'>#&gt; <span class='message'>Harmony 5/10</span></div><div class='output co'>#&gt; <span class='message'>Harmony 6/10</span></div><div class='output co'>#&gt; <span class='message'>Harmony 7/10</span></div><div class='output co'>#&gt; <span class='message'>Harmony 8/10</span></div><div class='output co'>#&gt; <span class='message'>Harmony 9/10</span></div><div class='output co'>#&gt; <span class='message'>Harmony converged after 9 iterations</span></div></pre>
+</div><div class='output co'>#&gt; [1] "The number of features is 26330"</div><div class='output co'>#&gt; <span class='message'>Harmony 1/10</span></div><div class='output co'>#&gt; <span class='message'>Harmony 2/10</span></div><div class='output co'>#&gt; <span class='message'>Harmony 3/10</span></div><div class='output co'>#&gt; <span class='message'>Harmony 4/10</span></div><div class='output co'>#&gt; <span class='message'>Harmony 5/10</span></div><div class='output co'>#&gt; <span class='message'>Harmony 6/10</span></div><div class='output co'>#&gt; <span class='message'>Harmony 7/10</span></div><div class='output co'>#&gt; <span class='message'>Harmony 8/10</span></div><div class='output co'>#&gt; <span class='message'>Harmony 9/10</span></div><div class='output co'>#&gt; <span class='message'>Harmony converged after 9 iterations</span></div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

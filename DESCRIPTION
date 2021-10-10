@@ -27,7 +27,8 @@ Depends:
     Matrix,
     gmodels,
     doParallel,
-    foreach
+    foreach,
+    matrixStats
 RoxygenNote: 7.1.1
 Suggests: 
     knitr,

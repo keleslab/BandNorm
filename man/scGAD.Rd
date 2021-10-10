@@ -2,18 +2,20 @@
 % Please edit documentation in R/scGAD.R
 \name{scGAD}
 \alias{scGAD}
-\title{Performing GAD for each single-cell data}
+\title{Performing scGAD for each single-cell data}
 \usage{
-scGAD(path, genes, cores = 10, output)
+scGAD(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 25)
 }
 \arguments{
 \item{path}{A path to the single-cell Hi-C data. The data format should be the same as bandnorm input.}
 
+\item{hic_df}{You can also load dataframe containing all Hi-C data to here, but it is not recommended, since in scGAD, we are dealing with high resolution matrices, and it will consume a lot of memory if we load it directly.}
+
 \item{genes}{A data frame containing 4 columns: chrmomsome, start, end, gene name.}
 
-\item{cores}{Number of cores used for parallel running. Default is 10.}
+\item{depthNorm}{Whether to normalize the sequencing depth effect. Default is TRUE.}
 
-\item{output}{The path for outputting scGAD. Each file contains two columns: gene name and gad value.}
+\item{cores}{Number of cores used for parallel running. Default is 10.}
 }
 \description{
 This function allows you to calculate GAD value for each gene in each cell.
