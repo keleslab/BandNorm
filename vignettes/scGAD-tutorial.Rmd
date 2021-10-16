@@ -49,11 +49,15 @@ For the example dataset, we also have batch information and cell-type informatio
 
 ## Use scGAD
 
-We provide a demo scHi-C data named hic_df, sampled 100 cells of Mature Oligodendrocyte, Microglia Etc. and Hippocampal Granule Cell, three cell types and chromosome 1 from [Tan2021](https://www.cell.com/cell/fulltext/S0092-8674(20)31754-2?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS0092867420317542%3Fshowall%3Dtrue) for test run. After obtaining the hic_df file, you can use the `scGAD` function to normalize the data and obtain the scGAD score. The result is similar to scRNAseq, where what you can get is a matrix that rows are genes, and columns are cells.
+We provide a demo scHi-C data named hic_df, sampled 350 cells of Mature Oligodendrocyte, Microglia Etc. and Hippocampal Granule Cell, three cell types from [Tan2021](https://www.cell.com/cell/fulltext/S0092-8674(20)31754-2?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS0092867420317542%3Fshowall%3Dtrue) for test run. After obtaining the hic_df file, you can use the `scGAD` function to normalize the data and obtain the scGAD score. In scGAD function, except from the data, we also need annotation file, where you can get mm9, mm10, hg19 and hg38 using data(Annotations). The result is similar to scRNAseq, where what you can get is a matrix that rows are genes, and columns are cells.
 
 ```{r scGAD}
 library(BandNorm)
-data(scGADExample)
+library(curl)
+h = new_handle(dirlistonly=TRUE)
+con = curl("http://ftp.cs.wisc.edu/pub/users/kelesgroup/siqi/scGAD/scGADExample.rda", "r", h)
+load(con)
+close(con)
 gad_score = scGAD(hic_df = scgad_df, genes = geneANNO, depthNorm = TRUE)
 ```
 
@@ -64,6 +68,65 @@ library(ggplot2)
 summary = summary[match(colnames(gad_score), summary$cell), ]
 gadPCA = prcomp(gad_score)$rotation[, 1:15]
 gadPCA = data.frame(gadPCA, cellTypes = summary$`cell-type cluster`)
-ggplot(gadPCA, aes(x = PC1, y = PC2, col = cellTypes)) + geom_point() + theme_bw(base_size = 10)
+ggplot(gadPCA, aes(x = PC1, y = PC2, col = cellTypes)) + geom_point() + theme_bw(base_size = 10) + scale_color_manual(breaks = c("Hippocampal Granule Cell", "Mature Oligodendrocyte", "Microglia Etc."),
+                   values = c("#1B4F72", "#F39C12", "#000000"))
 ```
+
+Finally, with scRNA-seq data on hand, we can do projection from scGAD to scRNA-seq. For scRNA-seq, we have 1076b cells from Mature Oligodendrocyte, Microglia Etc. and Hippocampal Granule Cell.
+
+```{r Projection}
+library(ggplot2)
+library(viridis)
+library(dplyr)
+library(gridExtra)
+library(ggpubr)
+library(Seurat)
+
+DataList = list(scGAD = gad_score, scRNAseq = RNA)
+cellTypeList = list(scGAD = summary$`cell-type cluster`, scRNAseq = cellTypeRNA)
+names(cellTypeList[[1]]) = summary$cell
+names(cellTypeList[[2]]) = colnames(RNA)
+
+combinedAssay = runProjection(DataList, doNorm = c(FALSE, FALSE), cellTypeList)
+
+p_celltype <- DimPlot(combinedAssay, reduction = "umap", label = TRUE, repel = TRUE, pt.size = 1.3, shape.by = "method", label.size = 6) +
+xlab("UMAP 1") +
+ylab("UMAP 2") +
+scale_color_manual(breaks = c("Hippocampal Granule Cell", "Mature Oligodendrocyte", "Microglia Etc."),
+                   values = c("#1B4F72", "#F39C12", "#000000")) +
+rremove("legend")
+
+
+pRNA = combinedAssay@reductions$umap@cell.embeddings %>% data.frame %>% mutate(celltype = c(cellTypeList[[1]], cellTypeList[[2]]), label = c(rep("scGAD", length(cellTypeList[[1]])), rep("scRNA-seq", length(cellTypeList[[2]])))) %>%
+filter(label == "scRNA-seq") %>%
+ggplot(aes(x = UMAP_1, y = UMAP_2, color = celltype)) +
+geom_point(size = 0.3) +
+theme_pubr(base_size = 10) +
+scale_color_manual(breaks = c("Hippocampal Granule Cell", "Mature Oligodendrocyte", "Microglia Etc."),
+                   values = c("#1B4F72", "#F39C12", "#000000")) +
+xlab("UMAP 1") +
+ylab("UMAP 2") +
+rremove("legend") +
+ggtitle("Single-cell Transcriptomics") + theme(axis.title = element_blank())
+
+
+pGAD = combinedAssay@reductions$umap@cell.embeddings %>% data.frame %>% mutate(celltype = c(cellTypeList[[1]], cellTypeList[[2]]), label = c(rep("scGAD", length(cellTypeList[[1]])), rep("scRNA-seq", length(cellTypeList[[2]])))) %>%
+filter(label == "scGAD") %>%
+ggplot(aes(x = UMAP_1, y = UMAP_2, color = celltype)) +
+geom_point(size = 0.3) +
+theme_pubr(base_size = 10) +
+scale_color_manual(breaks = c("Hippocampal Granule Cell", "Mature Oligodendrocyte", "Microglia Etc."),
+                   values = c("#1B4F72", "#F39C12", "#000000")) +
+xlab("UMAP 1") +
+ylab("UMAP 2") +
+rremove("legend") +
+ggtitle("Single-cell 3D Genomics") +
+ theme(axis.title = element_blank())
+
+
+lay = rbind(c(1, 1, 2))
+grid.arrange(p_celltype, arrangeGrob(pRNA, pGAD, ncol = 1, nrow = 2), layout_matrix = lay)
+```
+
+
 

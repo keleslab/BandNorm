@@ -51,6 +51,7 @@ scGAD = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 25
 
   colnames(output) = names
   rownames(output) = genes$gene_name
+  output = output[rowSums(output) > 0, ]
   
   if (depthNorm) {
     output = t(t(output) / colSums(output)) * 1e04
@@ -61,4 +62,52 @@ scGAD = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 25
 
 
 
+#' Performing Projection for scGAD on other single-cell data
+#'
+#' This function allows you to project scGAD value on various assays.
+#' @param DataList A list of matrices containing all assays. Each matrix should have a name that corresponds to the assay. 
+#' @param doNorm A vector of boolean. Each entries determines whether each matrix should be normalized.
+#' @export
+#' @examples
+#' #
+
+runProjection = function(DataList, doNorm, cellTypeList){
+  geneList = lapply(DataList, rownames)
+  common_gene = Reduce(intersect, geneList)
+  selectGene = function(assay, genes = common_gene){
+    assay[genes, ]
+  }
+  DataList = lapply(DataList, selectGene)
+  nameAssays = names(DataList)
+  GADList = list()
+  for (i in 1:length(nameAssays)){
+    s = CreateSeuratObject(DataList[[i]])
+    if (doNorm[i]){
+      s = NormalizeData(object = s)
+      all.genes <- rownames(s)
+      s <- ScaleData(s, features = all.genes)
+    }else {
+      s@assays$RNA@scale.data = DataList[[i]]
+    }
+    Idents(s) = cellTypeList[[i]]
+    s$method = nameAssays[i]
+    DefaultAssay(s) = "RNA"
+    GADList[[i]] = s
+  }
+  
+  GADList <- lapply(X = GADList, FUN = function(x) {
+    x <- FindVariableFeatures(x, selection.method = "mean.var.plot", nfeatures = 2500)
+  })
+  features <- SelectIntegrationFeatures(object.list = GADList)
+  suppressWarnings(getAnchors <- FindIntegrationAnchors(object.list = GADList, anchor.features = features,
+                                                        k.filter = 50))
+  suppressWarnings(getCombined <- IntegrateData(anchorset = getAnchors))
+
+  DefaultAssay(getCombined) <- "integrated"
+
+  suppressWarnings(getCombined <- ScaleData(getCombined, verbose = FALSE))
+  getCombined <- RunPCA(getCombined, npcs = 5, verbose = FALSE)
+  getCombined <- RunUMAP(getCombined, reduction = "pca", dims = 1:5)
+  getCombined
+}
 
