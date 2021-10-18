@@ -12,43 +12,44 @@
 
 scGAD = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 25){
   discardCounts = max(genes$s2 - genes$s1)
-
+  
   if (is.null(hic_df)){
     cl <- makeCluster(cores[1])
     registerDoParallel(cl)
     names = list.files(path)
     paths = list.files(path, full.names = TRUE)
-    output = foreach(k=1:length(names), .packages=c("dplyr", "data.table"), .combine = 'cbind') %dopar% {
+    output = foreach(k=1:length(names), .packages=c("dplyr", "data.table", "matrixStats"), .combine = 'cbind') %dopar% {
       cell = fread(paths[k])
-      cell = cell[abs(cell$V4 - cell$V2) <= discardCounts, ]
+      cell = cell[abs(V4 - V2) <= discardCounts]
       gad_score = rep(NA, nrow(genes))
+      setkey(cell, V1)
       for (i in 1:nrow(genes)){
-        temp = cell[V1 == genes[i, ]$chr, ]
-        gad_score[i] = sum(temp[V2 >= genes[i, ]$s1 - 10000 &
-                                  V2 <= genes[i, ]$s2 &
-                                  V4 >= genes[i, ]$s1 - 10000 &
-                                  V4 <= genes[i, ]$s2, ]$V5)
+        temp = cell[J(genes[i, ]$chr)]
+        gad_score[i] = sum2(temp$V5[temp$V2 %between% c(genes[i, ]$s1 - 10000, genes[i, ]$s2) &
+                                      temp$V4 %between% c(genes[i, ]$s1 - 10000, genes[i, ]$s2)])
       }
       gad_score
     }
   } else{
+    cl <- makeCluster(cores[1])
+    registerDoParallel(cl)
+    hic_df = setDT(hic_df)
     names = unique(hic_df$cell)
-    output = c()
-    for (i in 1:length(names)){
-      tempcell = hic_df[hic_df$cell == names[i], ]
-      tempcell = tempcell[abs(tempcell$binA - tempcell$binB) <= discardCounts, ]
+    output = foreach(k=1:length(names), .packages=c("dplyr", "data.table", "matrixStats"), .combine = 'cbind') %dopar% {
+      setkey(hic_df, cell)
+      tempcell = hic_df[J(names[k])]
+      tempcell = tempcell[abs(binA - binB) <= discardCounts]
       gad_score = rep(NA, nrow(genes))
       for (i in 1:nrow(genes)){
-        temp = tempcell[tempcell$chrom == genes[i, ]$chr, ]
-        gad_score[i] = sum(temp[temp$binA >= genes[i, ]$s1 - 10000 &
-                                  temp$binA <= genes[i, ]$s2 &
-                                  temp$binB >= genes[i, ]$s1 - 10000 &
-                                  temp$binB <= genes[i, ]$s2, ]$count)
+        setkey(tempcell, chrom)
+        temp = tempcell[J(genes[i, ]$chr)]
+        gad_score[i] = sum2(temp$count[temp$binA %between% c(genes[i, ]$s1 - 10000, genes[i, ]$s2) &
+                                         temp$binB %between% c(genes[i, ]$s1 - 10000, genes[i, ]$s2)])
       }
-      output = cbind(output, gad_score)
+      gad_score
     }
   }
-
+  
   colnames(output) = names
   rownames(output) = genes$gene_name
   output = output[rowSums(output) > 0, ]
@@ -59,7 +60,6 @@ scGAD = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 25
   GAD = (output - rowMeans(output))/sqrt(rowVars(output))
   GAD
 }
-
 
 
 #' Performing Projection for scGAD on other single-cell data
