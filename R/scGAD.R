@@ -19,14 +19,29 @@ scGAD = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 25
     names = list.files(path)
     paths = list.files(path, full.names = TRUE)
     output = foreach(k=1:length(names), .packages=c("dplyr", "data.table", "matrixStats"), .combine = 'cbind') %dopar% {
+      discardCounts = max(genes$s2 - genes$s1)
       cell = fread(paths[k])
       cell = cell[abs(V4 - V2) <= discardCounts]
-      gad_score = rep(NA, nrow(genes))
       setkey(cell, V1)
+      
+      gad_score = rep(NA, nrow(genes))
+      idx = list()
+      chr = genes$chr
+      
+      s1_low <- genes$s1 - 10000
+      s2 <- genes$s2
+      
+      pchr = chr[1]
+      temp = cell[J(pchr)]
       for (i in 1:nrow(genes)){
-        temp = cell[J(genes[i, ]$chr)]
-        gad_score[i] = sum2(temp$V5[temp$V2 %between% c(genes[i, ]$s1 - 10000, genes[i, ]$s2) &
-                                      temp$V4 %between% c(genes[i, ]$s1 - 10000, genes[i, ]$s2)])
+        cchr = chr[i]
+        if (cchr != pchr) {
+          temp = cell[J(cchr)]
+        }
+        
+        gad_score[i] = sum2(temp$V5[temp$V2 %between% c(s1_low[i], s2[i]) &
+                                      temp$V4 %between% c(s1_low[i], s2[i])])
+        pchr = chr[i]
       }
       gad_score
     }
@@ -39,12 +54,25 @@ scGAD = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 25
       setkey(hic_df, cell)
       tempcell = hic_df[J(names[k])]
       tempcell = tempcell[abs(binA - binB) <= discardCounts]
+      setkey(tempcell, chrom)
       gad_score = rep(NA, nrow(genes))
+      idx = list()
+      chr = genes$chr
+      
+      s1_low <- genes$s1 - 10000
+      s2 <- genes$s2
+      
+      pchr = chr[1]
+      temp = cell[J(pchr)]
       for (i in 1:nrow(genes)){
-        setkey(tempcell, chrom)
-        temp = tempcell[J(genes[i, ]$chr)]
-        gad_score[i] = sum2(temp$count[temp$binA %between% c(genes[i, ]$s1 - 10000, genes[i, ]$s2) &
-                                         temp$binB %between% c(genes[i, ]$s1 - 10000, genes[i, ]$s2)])
+        cchr = chr[i]
+        if (cchr != pchr) {
+          temp = cell[J(cchr)]
+        }
+        
+        gad_score[i] = sum2(temp$count[temp$binA %between% c(s1_low[i], s2[i]) &
+                                      temp$binB %between% c(s1_low[i], s2[i])])
+        pchr = chr[i]
       }
       gad_score
     }
