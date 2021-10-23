@@ -29,15 +29,15 @@ Depends:
     doParallel,
     foreach,
     matrixStats,
-    Seurat
+    Seurat,
+    strawr,
+    rmarkdown
 RoxygenNote: 7.1.1
 Suggests: 
     knitr,
     rmarkdown
 VignetteBuilder: knitr
 Imports: 
-    harmony,
-    FreeHiCLite
+    harmony
 Remotes: 
-    immunogenomics/harmony,
-    baconzhou/FreeHiCLite
+    immunogenomics/harmony

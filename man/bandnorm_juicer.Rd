@@ -9,9 +9,9 @@ bandnorm_juicer(path = NULL, resolution, pairs, save = TRUE, save_path = NULL)
 \arguments{
 \item{path}{The path for all the cells in a directory. There can be sub-directories.}
 
-\item{resolution}{Specify the resolution from the hic file.}
+\item{resolution}{Specify the resolution from the hic file."}
 
-\item{pairs}{Specify the pairs of chromosomes to use, the format is like "1_1" or "chr1_chr1". If the input is "all_all", it will include all the intra-chromosomal bin pairs.}
+\item{pairs}{Specify the pairs of chromosomes to use, the format is a string like "1". If the input is "all", it will include all the intra-chromosomal bin pairs.}
 
 \item{save}{Whether to save each normalized cells. Default is TRUE. Note that if don't have large memory on your computer, and you need to use create_embedding function, it is highly recommended to save the cells because it helps lower the cost of memory in this function.}
 
