@@ -63,11 +63,11 @@ scGAD = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 25
       s2 <- genes$s2
       
       pchr = chr[1]
-      temp = cell[J(pchr)]
+      temp = tempcell[J(pchr)]
       for (i in 1:nrow(genes)){
         cchr = chr[i]
         if (cchr != pchr) {
-          temp = cell[J(cchr)]
+          temp = tempcell[J(cchr)]
         }
         
         gad_score[i] = sum2(temp$count[temp$binA %between% c(s1_low[i], s2[i]) &
