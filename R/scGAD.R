@@ -20,7 +20,7 @@ scGAD = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 25
     paths = list.files(path, full.names = TRUE)
     output = foreach(k=1:length(names), .packages=c("dplyr", "data.table", "matrixStats"), .combine = 'cbind') %dopar% {
       discardCounts = max(genes$s2 - genes$s1)
-      cell = fread(paths[k])
+      cell = fread(paths[k], select = c("V1", "V2", "V4", "V5"))
       cell = cell[abs(V4 - V2) <= discardCounts]
       setkey(cell, V1)
       

@@ -58,6 +58,7 @@ h = new_handle(dirlistonly=TRUE)
 con = curl("http://ftp.cs.wisc.edu/pub/users/kelesgroup/siqi/scGAD/scGADExample.rda", "r", h)
 load(con)
 close(con)
+
 gad_score = scGAD(hic_df = scgad_df, genes = geneANNO, depthNorm = TRUE)
 ```
 
