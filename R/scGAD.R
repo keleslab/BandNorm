@@ -12,25 +12,21 @@
 
 scGAD = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 25){
   discardCounts = max(genes$s2 - genes$s1)
-  
+  chr = genes$chr
+  s1_low <- genes$s1 - 10000
+  s2 <- genes$s2
   if (is.null(hic_df)){
     cl <- makeCluster(cores[1])
     registerDoParallel(cl)
     names = list.files(path)
     paths = list.files(path, full.names = TRUE)
     output = foreach(k=1:length(names), .packages=c("dplyr", "data.table", "matrixStats"), .combine = 'cbind') %dopar% {
-      discardCounts = max(genes$s2 - genes$s1)
       cell = fread(paths[k], select = c("V1", "V2", "V4", "V5"))
       cell = cell[abs(V4 - V2) <= discardCounts]
       setkey(cell, V1)
       
       gad_score = rep(NA, nrow(genes))
       idx = list()
-      chr = genes$chr
-      
-      s1_low <- genes$s1 - 10000
-      s2 <- genes$s2
-      
       pchr = chr[1]
       temp = cell[J(pchr)]
       for (i in 1:nrow(genes)){
@@ -57,11 +53,6 @@ scGAD = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 25
       setkey(tempcell, chrom)
       gad_score = rep(NA, nrow(genes))
       idx = list()
-      chr = genes$chr
-      
-      s1_low <- genes$s1 - 10000
-      s2 <- genes$s2
-      
       pchr = chr[1]
       temp = tempcell[J(pchr)]
       for (i in 1:nrow(genes)){
