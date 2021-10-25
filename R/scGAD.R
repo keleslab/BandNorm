@@ -4,13 +4,15 @@
 #' @param path A path to the single-cell Hi-C data. The data format should be the same as bandnorm input.
 #' @param hic_df You can also load dataframe containing all Hi-C data to here, but it is not recommended, since in scGAD, we are dealing with high resolution matrices, and it will consume a lot of memory if we load it directly.
 #' @param genes A data frame containing 4 columns: chrmomsome, start, end, gene name.
-#' @param cores Number of cores used for parallel running. Default is 10.
+#' @param cores Number of cores used for parallel running. Default is 4.
+#' @param threads Number of threads for fread function, default is 8.
 #' @param depthNorm Whether to normalize the sequencing depth effect. Default is TRUE.
 #' @export
 #' @examples
 #' #
 
-scGAD = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 25){
+scGAD = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 4, threads = 8){
+  setDTthreads(threads)
   discardCounts = max(genes$s2 - genes$s1)
   chr = genes$chr
   s1_low <- genes$s1 - 10000
@@ -35,8 +37,8 @@ scGAD = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 25
           temp = cell[J(cchr)]
         }
         
-        gad_score[i] = sum2(temp$V5[temp$V2 %between% c(s1_low[i], s2[i]) &
-                                      temp$V4 %between% c(s1_low[i], s2[i])])
+        gad_score[i] = sum2(.subset2(temp, 4)[temp$V2 %between% c(s1_low[i], s2[i]) &
+                                                temp$V4 %between% c(s1_low[i], s2[i])])
         pchr = chr[i]
       }
       gad_score
@@ -61,8 +63,8 @@ scGAD = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 25
           temp = tempcell[J(cchr)]
         }
         
-        gad_score[i] = sum2(temp$count[temp$binA %between% c(s1_low[i], s2[i]) &
-                                      temp$binB %between% c(s1_low[i], s2[i])])
+        gad_score[i] = sum2(.subset2(temp, 4)[temp$V2 %between% c(s1_low[i], s2[i]) &
+                                                temp$V4 %between% c(s1_low[i], s2[i])])
         pchr = chr[i]
       }
       gad_score
