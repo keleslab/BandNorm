@@ -5,6 +5,8 @@ vignette: >
   %\VignetteIndexEntry{scGAD-tutorial}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+resource_files:
+  - figures/scgadMethod.jpg
 ---
 
 ```{r, include = FALSE}
@@ -17,6 +19,8 @@ knitr::opts_chunk$set(
 ## Introduction
 
 Recent advancements in single-cell technologies enabled the profiling of 3D genome structures in a single-cell fashion. Quantitative tools are needed to fully leverage the unprecedented resolution of single-cell high-throughput chromatin conformation (scHi-C) data and integrate it with other single-cell data modalities. We developed single-cell gene-body associating domain (scGAD) scores available in R package to explore scHi-C data in units of genes. Proper normalization is investigated to eliminate technical biases.
+
+![The introduction for scGAD](../figures/scgadMethod.jpg)
 
 ## Installation
 
@@ -45,11 +49,9 @@ Another way is to input a data.frame containing all interactions and the column 
 
 The data should be 10kb resolution. We will allow more formats to be used here, and we will try to allow higher resolution.
 
-For the example dataset, we also have batch information and cell-type information. Note that the cell_name in those external information should be consistent with the hic_df file.
-
 ## Use scGAD
 
-We provide a demo scHi-C data named hic_df, sampled 350 cells of Mature Oligodendrocyte, Microglia Etc. and Hippocampal Granule Cell, three cell types from [Tan2021](https://www.cell.com/cell/fulltext/S0092-8674(20)31754-2?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS0092867420317542%3Fshowall%3Dtrue) for test run. After obtaining the hic_df file, you can use the `scGAD` function to normalize the data and obtain the scGAD score. In scGAD function, except from the data, we also need annotation file, where you can get mm9, mm10, hg19 and hg38 using data(Annotations). The result is similar to scRNAseq, where what you can get is a matrix that rows are genes, and columns are cells.
+We provide a demo scHi-C data named hic_df, sampled 350 cells of Mature Oligodendrocyte, Microglia Etc. and Hippocampal Granule Cell, three cell types from [Tan2021](https://www.cell.com/cell/fulltext/S0092-8674(20)31754-2?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS0092867420317542%3Fshowall%3Dtrue) for test run. Note that the cells are different from real cells, since I modify it for the propose of fast computation. The data presented here is just to show how the data looks like, and how our framework runs. After obtaining the scgad_df file, you can use the `scGAD` function to normalize the data and obtain the scGAD score. In scGAD function, except from the data, we also need annotation file, where you can get mm9, mm10, hg19 and hg38 using data(Annotations). The result is similar to scRNAseq, where what you can get is a matrix that rows are genes, and columns are cells.
 
 ```{r scGAD}
 library(BandNorm)
@@ -73,7 +75,7 @@ ggplot(gadPCA, aes(x = PC1, y = PC2, col = cellTypes)) + geom_point() + theme_bw
                    values = c("#1B4F72", "#F39C12", "#000000"))
 ```
 
-Finally, with scRNA-seq data on hand, we can do projection from scGAD to scRNA-seq. For scRNA-seq, we have 1076b cells from Mature Oligodendrocyte, Microglia Etc. and Hippocampal Granule Cell.
+Finally, with scRNA-seq data on hand, we can do projection from scGAD to scRNA-seq. For scRNA-seq, we have 1076 cells from Mature Oligodendrocyte, Microglia Etc. and Hippocampal Granule Cell.
 
 ```{r Projection}
 library(ggplot2)

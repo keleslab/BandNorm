@@ -4,7 +4,14 @@
 \alias{scGAD}
 \title{Performing scGAD for each single-cell data}
 \usage{
-scGAD(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 25)
+scGAD(
+  path = NULL,
+  hic_df = NULL,
+  genes,
+  depthNorm = TRUE,
+  cores = 4,
+  threads = 8
+)
 }
 \arguments{
 \item{path}{A path to the single-cell Hi-C data. The data format should be the same as bandnorm input.}
@@ -15,7 +22,9 @@ scGAD(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 25)
 
 \item{depthNorm}{Whether to normalize the sequencing depth effect. Default is TRUE.}
 
-\item{cores}{Number of cores used for parallel running. Default is 10.}
+\item{cores}{Number of cores used for parallel running. Default is 4.}
+
+\item{threads}{Number of threads for fread function, default is 8.}
 }
 \description{
 This function allows you to calculate GAD value for each gene in each cell.

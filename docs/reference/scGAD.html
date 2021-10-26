@@ -90,7 +90,7 @@
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
+    <span class="fas fa fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -137,7 +137,14 @@
     <p>This function allows you to calculate GAD value for each gene in each cell.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>scGAD</span><span class='op'>(</span>path <span class='op'>=</span> <span class='cn'>NULL</span>, hic_df <span class='op'>=</span> <span class='cn'>NULL</span>, <span class='va'>genes</span>, depthNorm <span class='op'>=</span> <span class='cn'>TRUE</span>, cores <span class='op'>=</span> <span class='fl'>25</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>scGAD</span><span class='op'>(</span>
+  path <span class='op'>=</span> <span class='cn'>NULL</span>,
+  hic_df <span class='op'>=</span> <span class='cn'>NULL</span>,
+  <span class='va'>genes</span>,
+  depthNorm <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  cores <span class='op'>=</span> <span class='fl'>4</span>,
+  threads <span class='op'>=</span> <span class='fl'>8</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -160,7 +167,11 @@
     </tr>
     <tr>
       <th>cores</th>
-      <td><p>Number of cores used for parallel running. Default is 10.</p></td>
+      <td><p>Number of cores used for parallel running. Default is 4.</p></td>
+    </tr>
+    <tr>
+      <th>threads</th>
+      <td><p>Number of threads for fread function, default is 8.</p></td>
     </tr>
     </table>
 
