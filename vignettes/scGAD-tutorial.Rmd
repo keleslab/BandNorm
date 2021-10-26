@@ -20,7 +20,7 @@ knitr::opts_chunk$set(
 
 Recent advancements in single-cell technologies enabled the profiling of 3D genome structures in a single-cell fashion. Quantitative tools are needed to fully leverage the unprecedented resolution of single-cell high-throughput chromatin conformation (scHi-C) data and integrate it with other single-cell data modalities. We developed single-cell gene-body associating domain (scGAD) scores available in R package to explore scHi-C data in units of genes. Proper normalization is investigated to eliminate technical biases.
 
-![The introduction for scGAD](../figures/scgadMethod.jpg)
+![](../figures/scgadMethod.jpg)
 
 ## Installation
 

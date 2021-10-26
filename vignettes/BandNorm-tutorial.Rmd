@@ -20,7 +20,7 @@ The advent of single-cell sequencing technologies in profiling 3D genome organiz
 
 To explicitly capture chromatin conformation features and distinguish cells based on their 3D genome organizations, we develop a simple and fast band normalization approach, `BandNorm`. `BandNorm` first removes genomic distance bias within a cell, and sequencing depth normalizes between cells. Consequently, `BandNorm` adds back a common band-dependent contact decay profile for the contact matrices across cells. The former step is achieved by dividing the interaction frequencies of each band within a cell with the cell’s band mean. The latter step is implemented by multiplying each scaled band by the average band mean across cells.
 
-![The introduction for BandNorm](../figures/bandnorm_intro.png)
+![](../figures/bandnorm_intro.png)
 
 ## Installation
 
