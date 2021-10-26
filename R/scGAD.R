@@ -1,7 +1,7 @@
 #' Performing scGAD for each single-cell data
 #'
 #' This function allows you to calculate GAD value for each gene in each cell.
-#' @param path A path to the single-cell Hi-C data. The data format should be the same as bandnorm input.
+#' @param path A path to the single-cell Hi-C data. The data format should be the same as in the bandnorm hic_df input.
 #' @param hic_df You can also load dataframe containing all Hi-C data to here, but it is not recommended, since in scGAD, we are dealing with high resolution matrices, and it will consume a lot of memory if we load it directly.
 #' @param genes A data frame containing 4 columns: chrmomsome, start, end, gene name.
 #' @param cores Number of cores used for parallel running. Default is 4.
@@ -23,7 +23,8 @@ scGAD = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 4,
     names = list.files(path)
     paths = list.files(path, full.names = TRUE)
     output = foreach(k=1:length(names), .packages=c("dplyr", "data.table", "matrixStats"), .combine = 'cbind') %dopar% {
-      cell = fread(paths[k], select = c("V1", "V2", "V4", "V5"))
+      cell = fread(paths[k], select = c(1, 2, 4, 5))
+      colnames(cell) = c("V1", "V2", "V4", "v5")
       cell = cell[abs(V4 - V2) <= discardCounts]
       setkey(cell, V1)
       
