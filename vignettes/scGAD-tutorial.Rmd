@@ -16,40 +16,80 @@ knitr::opts_chunk$set(
 
 ## Introduction
 
-Recent advancements in single-cell technologies enabled the profiling of 3D genome structures in a single-cell fashion. Quantitative tools are needed to fully leverage the unprecedented resolution of single-cell high-throughput chromatin conformation (scHi-C) data and integrate it with other single-cell data modalities. We developed single-cell gene-body associating domain (scGAD) scores available in R package to explore scHi-C data in units of genes. Proper normalization is investigated to eliminate technical biases.
+Recent advancements in single-cell technologies enabled the profiling of 3D genome structures in a single-cell fashion. Quantitative tools are needed to fully leverage the unprecedented resolution of single-cell high-throughput chromatin conformation (scHi-C) data and integrate it with other single-cell data modalities. We present single-cell gene associating domain (scGAD) scores as a dimension reduction and exploratory analysis tool for scHi-C data. scGAD enables summarization at the gene level while accounting for inherent gene-level genomic biases. Low-dimensional projections with scGAD capture clustering of cells based on their 3D structures. scGAD enables identifying genes with significant chromatin interactions within and between cell types. We further show that scGAD facilitates the integration of scHi-C data with other single-cell data modalities by enabling its projection onto reference low-dimensional embeddings of scRNA-seq. 
+Please refer to our manuscript, [scGAD: single-cell gene associating domain scores for exploratory analysis of scHi-C data](https://www.biorxiv.org/content/10.1101/2021.10.22.465520v1), on BioRxiv for the comprehensive study of scGAD.
 
 ![](../figures/Fig1A.png)
 
+In this tutorial, we will walk you through 
+
+- 1. The usage of scGAD function to convert single-cell Hi-C contact matrices into gene x cell scGAD score matrix. 
+
+- 2. Integration of scGAD scores of scHi-C with scRNA-seq reference panel.
+
 ## Installation
 
-The installation is the same as `BandNorm`, since scGAD is included in this package.
+Please refer to the `BandNorm` R package installation section in [BandNorm tutorial](https://sshen82.github.io/BandNorm/articles/BandNorm-tutorial.html). scGAD is one of the key functions of `BandNorm` R package.
 
-## Format of input
+## 1. scGAD Usage 
 
-We currently allows two ways input the data:
+### 1.1 Format of input scHi-C data
 
-A path containing all cells in the form of [chr1, binA, chr2, binB, count], the cell looks like below:
+scGAD function allows two formats of input data. It can be **A.** the path to the input data or **B.** a data.frame object containing all the interaction from all the cells with cell name in each row.
+
+**A.** A path to the folder where the single-cell Hi-C contact matrices are saved. One file per cell in the form of 5-columns bed file, namely ```chrA, binA, chrB, binB, count```:
 
 ```
-chr1    0   chr1    10000 9
+chr1    0       chr1    10000 9
 chr1    10000   chr1    10000 20
-chr1    0   chr1    20000 2
-chr1    10000 chr1    20000 4
-chr1    20000 chr1    20000 22
-chr1    10000 chr1    30000 1
-chr1    20000 chr1    30000 11
-chr1    30000 chr1    30000 197
-chr1    10000 chr1    40000 1
-chr1    20000 chr1    40000 2
+chr1    0       chr1    20000 2
+chr1    10000   chr1    20000 4
+chr1    20000   chr1    20000 22
+chr1    10000   chr1    30000 1
+chr1    20000   chr1    30000 11
+chr1    30000   chr1    30000 197
+chr1    10000   chr1    40000 1
+chr1    20000   chr1    40000 2
 ```
 
-Another way is to input a data.frame containing all interactions and the column is like [chr1, binA, binB, count, cell_name]. This way is not recommended, since single-cell Hi-C data is huge. However, it will be fast if your computer can handle the data in this way.
+**B.** Another way is to provide a data.frame object which includes all interactions information plus the cell name where such interactions occur. The data frame should have 5 columns and look like ```chrom, binA, binB, count, cell```. The column names in here should be exactly the same as stated, and the order of columns doesn't matter. Option B is not recommended for the large volumne of single-cell Hi-C data set especially when it is implemented with limited computational resources like laptop. However, it can be fast if it is run on servers or computers which have sufficient memory to store such large data.frame object.
 
-The data should be 10kb resolution. We will allow more formats to be used here, and we will try to allow higher resolution.
+```
+> scgad_df
+chrom   binA    binB    count   cell
+chr1    0       10000   9       cell_1
+chr1    10000   10000   20      cell_1
+chr1    0       20000   2       cell_1
+chr1    10000   20000   4       cell_1
+chr1    20000   20000   22      cell_1
+chr1    10000   30000   1       cell_2
+chr1    20000   30000   11      cell_2
+chr1    30000   30000   197     cell_2
+chr1    10000   40000   1       cell_2
+chr1    20000   40000   2       cell_3
+```
 
-## Use scGAD
+### 1.2 Format of input gene coordinate file.
+you can get mm9, mm10, hg19 and hg38 using data(Annotations). Below is the first ten rows of mm9Annotations. The first column is chromosome, s1 and s2 are start and end of the gene, and the last column is the gene name.
 
-We provide a demo scHi-C data named hic_df, sampled 350 cells of Mature Oligodendrocyte, Microglia Etc. and Hippocampal Granule Cell, three cell types from [Tan2021](https://www.cell.com/cell/fulltext/S0092-8674(20)31754-2?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS0092867420317542%3Fshowall%3Dtrue) for test run. Note that the cells are different from real cells, since I modify it for the propose of fast computation. The data presented here is just to show how the data looks like, and how our framework runs. After obtaining the scgad_df file, you can use the `scGAD` function to normalize the data and obtain the scGAD score. In scGAD function, except from the data, we also need annotation file, where you can get mm9, mm10, hg19 and hg38 using data(Annotations). The result is similar to scRNAseq, where what you can get is a matrix that rows are genes, and columns are cells.
+```
+> mm9Annotations
+chr       s1       s2     gene_name
+chr1  3195982  3661579          Xkr4
+chr1  4334224  4350473           Rp1
+chr1  4481009  4486494         Sox17
+chr1  4763287  4775820        Mrpl15
+chr1  4797869  4876851        Lypla1
+chr1  4847775  4887987         Tcea1
+chr1  4869283  4870750        Gm6104
+chr1  4899657  5060366         Rgs20
+chr1  5073254  5152630       Atp6v1h
+chr1  5578574  5596212         Oprk1
+```
+
+### 1.3 Demo run of scGAD
+
+The demo data used for illustrations was generated based on the real scHi-C data from [Tan et al. 2021. Cell](https://www.cell.com/cell/fulltext/S0092-8674(20)31754-2?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS0092867420317542%3Fshowall%3Dtrue). 350 cells were randomly sampled from three cell types, Mature Oligodendrocyte, Microglia Etc. and Hippocampal Granule Cell. The aim of the demo data is to show the format of input object to `scGAD` function and how to run `scGAD` function to get the scGAD scores.
 
 ```{r scGAD}
 library(BandNorm)
@@ -62,7 +102,17 @@ close(con)
 gad_score = scGAD(hic_df = scgad_df, genes = geneANNO, depthNorm = TRUE)
 ```
 
-Then, you can use PCA to look at the result, and cells are clearly separated.
+After using scGAD function, you can get the scGAD score like below:
+
+```
+>gad_score
+        cell_1    cell_2    cell_3
+Xkr4    -2.29     -0.87     -0.29
+Rp1     0.42      0.09      -1.93
+Rgs20   -0.14     -1.25     0.16
+```
+
+Then, you can use PCA to first perform dimensionality-reduction, and choose the first two principal components to visualize the result, and cells are clearly separated.
 
 ```{r PCA Result}
 library(ggplot2)
@@ -73,7 +123,9 @@ ggplot(gadPCA, aes(x = PC1, y = PC2, col = cellTypes)) + geom_point() + theme_bw
                    values = c("#1B4F72", "#F39C12", "#000000"))
 ```
 
-Finally, with scRNA-seq data on hand, we can do projection from scGAD to scRNA-seq. For scRNA-seq, we have 1076 cells from Mature Oligodendrocyte, Microglia Etc. and Hippocampal Granule Cell.
+## 2. Projection of scGAD on scRNA-seq
+
+Finally, with scRNA-seq data on hand, we can do projection from scGAD to scRNA-seq. For scRNA-seq, we have 1076 cells from Mature Oligodendrocyte, Microglia Etc. and Hippocampal Granule Cell. These cells are also from [Tan et al. 2021. Cell](https://www.cell.com/cell/fulltext/S0092-8674(20)31754-2?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS0092867420317542%3Fshowall%3Dtrue).
 
 ```{r Projection}
 library(ggplot2)

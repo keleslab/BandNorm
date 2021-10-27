@@ -94,37 +94,77 @@
 <div id="introduction" class="section level2">
 <h2 class="hasAnchor">
 <a href="#introduction" class="anchor"></a>Introduction</h2>
-<p>Recent advancements in single-cell technologies enabled the profiling of 3D genome structures in a single-cell fashion. Quantitative tools are needed to fully leverage the unprecedented resolution of single-cell high-throughput chromatin conformation (scHi-C) data and integrate it with other single-cell data modalities. We developed single-cell gene-body associating domain (scGAD) scores available in R package to explore scHi-C data in units of genes. Proper normalization is investigated to eliminate technical biases.</p>
+<p>Recent advancements in single-cell technologies enabled the profiling of 3D genome structures in a single-cell fashion. Quantitative tools are needed to fully leverage the unprecedented resolution of single-cell high-throughput chromatin conformation (scHi-C) data and integrate it with other single-cell data modalities. We present single-cell gene associating domain (scGAD) scores as a dimension reduction and exploratory analysis tool for scHi-C data. scGAD enables summarization at the gene level while accounting for inherent gene-level genomic biases. Low-dimensional projections with scGAD capture clustering of cells based on their 3D structures. scGAD enables identifying genes with significant chromatin interactions within and between cell types. We further show that scGAD facilitates the integration of scHi-C data with other single-cell data modalities by enabling its projection onto reference low-dimensional embeddings of scRNA-seq. Please refer to our manuscript, <a href="https://www.biorxiv.org/content/10.1101/2021.10.22.465520v1">scGAD: single-cell gene associating domain scores for exploratory analysis of scHi-C data</a>, on BioRxiv for the comprehensive study of scGAD.</p>
 <p><img src="../figures/Fig1A.png"></p>
+<p>In this tutorial, we will walk you through</p>
+<ul>
+<li><ol style="list-style-type: decimal">
+<li>The usage of scGAD function to convert single-cell Hi-C contact matrices into gene x cell scGAD score matrix.</li>
+</ol></li>
+<li><ol start="2" style="list-style-type: decimal">
+<li>Integration of scGAD scores of scHi-C with scRNA-seq reference panel.</li>
+</ol></li>
+</ul>
 </div>
 <div id="installation" class="section level2">
 <h2 class="hasAnchor">
 <a href="#installation" class="anchor"></a>Installation</h2>
-<p>The installation is the same as <code>BandNorm</code>, since scGAD is included in this package.</p>
+<p>Please refer to the <code>BandNorm</code> R package installation section in <a href="https://sshen82.github.io/BandNorm/articles/BandNorm-tutorial.html">BandNorm tutorial</a>. scGAD is one of the key functions of <code>BandNorm</code> R package.</p>
 </div>
-<div id="format-of-input" class="section level2">
+<div id="scgad-usage" class="section level2">
 <h2 class="hasAnchor">
-<a href="#format-of-input" class="anchor"></a>Format of input</h2>
-<p>We currently allows two ways input the data:</p>
-<p>A path containing all cells in the form of [chr1, binA, chr2, binB, count], the cell looks like below:</p>
-<pre><code>chr1    0   chr1    10000 9
+<a href="#scgad-usage" class="anchor"></a>1. scGAD Usage</h2>
+<div id="format-of-input-schi-c-data" class="section level3">
+<h3 class="hasAnchor">
+<a href="#format-of-input-schi-c-data" class="anchor"></a>1.1 Format of input scHi-C data</h3>
+<p>scGAD function allows two formats of input data. It can be <strong>A.</strong> the path to the input data or <strong>B.</strong> a data.frame object containing all the interaction from all the cells with cell name in each row.</p>
+<p><strong>A.</strong> A path to the folder where the single-cell Hi-C contact matrices are saved. One file per cell in the form of 5-columns bed file, namely <code>chrA, binA, chrB, binB, count</code>:</p>
+<pre><code>chr1    0       chr1    10000 9
 chr1    10000   chr1    10000 20
-chr1    0   chr1    20000 2
-chr1    10000 chr1    20000 4
-chr1    20000 chr1    20000 22
-chr1    10000 chr1    30000 1
-chr1    20000 chr1    30000 11
-chr1    30000 chr1    30000 197
-chr1    10000 chr1    40000 1
-chr1    20000 chr1    40000 2</code></pre>
-<p>Another way is to input a data.frame containing all interactions and the column is like [chr1, binA, binB, count, cell_name]. This way is not recommended, since single-cell Hi-C data is huge. However, it will be fast if your computer can handle the data in this way.</p>
-<p>The data should be 10kb resolution. We will allow more formats to be used here, and we will try to allow higher resolution.</p>
+chr1    0       chr1    20000 2
+chr1    10000   chr1    20000 4
+chr1    20000   chr1    20000 22
+chr1    10000   chr1    30000 1
+chr1    20000   chr1    30000 11
+chr1    30000   chr1    30000 197
+chr1    10000   chr1    40000 1
+chr1    20000   chr1    40000 2</code></pre>
+<p><strong>B.</strong> Another way is to provide a data.frame object which includes all interactions information plus the cell name where such interactions occur. The data frame should have 5 columns and look like <code>chrom, binA, binB, count, cell</code>. The column names in here should be exactly the same as stated, and the order of columns doesn’t matter. Option B is not recommended for the large volumne of single-cell Hi-C data set especially when it is implemented with limited computational resources like laptop. However, it can be fast if it is run on servers or computers which have sufficient memory to store such large data.frame object.</p>
+<pre><code>&gt; scgad_df
+chrom   binA    binB    count   cell
+chr1    0       10000   9       cell_1
+chr1    10000   10000   20      cell_1
+chr1    0       20000   2       cell_1
+chr1    10000   20000   4       cell_1
+chr1    20000   20000   22      cell_1
+chr1    10000   30000   1       cell_2
+chr1    20000   30000   11      cell_2
+chr1    30000   30000   197     cell_2
+chr1    10000   40000   1       cell_2
+chr1    20000   40000   2       cell_3</code></pre>
 </div>
-<div id="use-scgad" class="section level2">
-<h2 class="hasAnchor">
-<a href="#use-scgad" class="anchor"></a>Use scGAD</h2>
-<p>We provide a demo scHi-C data named hic_df, sampled 350 cells of Mature Oligodendrocyte, Microglia Etc. and Hippocampal Granule Cell, three cell types from <a href="https://www.cell.com/cell/fulltext/S0092-8674(20)31754-2?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS0092867420317542%3Fshowall%3Dtrue">Tan2021</a> for test run. Note that the cells are different from real cells, since I modify it for the propose of fast computation. The data presented here is just to show how the data looks like, and how our framework runs. After obtaining the scgad_df file, you can use the <code>scGAD</code> function to normalize the data and obtain the scGAD score. In scGAD function, except from the data, we also need annotation file, where you can get mm9, mm10, hg19 and hg38 using data(Annotations). The result is similar to scRNAseq, where what you can get is a matrix that rows are genes, and columns are cells.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div id="format-of-input-gene-coordinate-file-" class="section level3">
+<h3 class="hasAnchor">
+<a href="#format-of-input-gene-coordinate-file-" class="anchor"></a>1.2 Format of input gene coordinate file.</h3>
+<p>you can get mm9, mm10, hg19 and hg38 using data(Annotations). Below is the first ten rows of mm9Annotations. The first column is chromosome, s1 and s2 are start and end of the gene, and the last column is the gene name.</p>
+<pre><code>&gt; mm9Annotations
+chr       s1       s2     gene_name
+chr1  3195982  3661579          Xkr4
+chr1  4334224  4350473           Rp1
+chr1  4481009  4486494         Sox17
+chr1  4763287  4775820        Mrpl15
+chr1  4797869  4876851        Lypla1
+chr1  4847775  4887987         Tcea1
+chr1  4869283  4870750        Gm6104
+chr1  4899657  5060366         Rgs20
+chr1  5073254  5152630       Atp6v1h
+chr1  5578574  5596212         Oprk1</code></pre>
+</div>
+<div id="demo-run-of-scgad" class="section level3">
+<h3 class="hasAnchor">
+<a href="#demo-run-of-scgad" class="anchor"></a>1.3 Demo run of scGAD</h3>
+<p>The demo data used for illustrations was generated based on the real scHi-C data from <a href="https://www.cell.com/cell/fulltext/S0092-8674(20)31754-2?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS0092867420317542%3Fshowall%3Dtrue">Tan et al. 2021. Cell</a>. 350 cells were randomly sampled from three cell types, Mature Oligodendrocyte, Microglia Etc. and Hippocampal Granule Cell. The aim of the demo data is to show the format of input object to <code>scGAD</code> function and how to run <code>scGAD</code> function to get the scGAD scores.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">BandNorm</span><span class="op">)</span>
 <span class="co">#&gt; Loading required package: ggplot2</span>
 <span class="co">#&gt; Warning: package 'ggplot2' was built under R version 4.0.5</span>
@@ -185,8 +225,14 @@ chr1    20000 chr1    40000 2</code></pre>
 <span class="fu"><a href="https://rdrr.io/r/base/connections.html">close</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span>
 
 <span class="va">gad_score</span> <span class="op">=</span> <span class="fu"><a href="../reference/scGAD.html">scGAD</a></span><span class="op">(</span>hic_df <span class="op">=</span> <span class="va">scgad_df</span>, genes <span class="op">=</span> <span class="va">geneANNO</span>, depthNorm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
-<p>Then, you can use PCA to look at the result, and cells are clearly separated.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<p>After using scGAD function, you can get the scGAD score like below:</p>
+<pre><code>&gt;gad_score
+        cell_1    cell_2    cell_3
+Xkr4    -2.29     -0.87     -0.29
+Rp1     0.42      0.09      -1.93
+Rgs20   -0.14     -1.25     0.16</code></pre>
+<p>Then, you can use PCA to first perform dimensionality-reduction, and choose the first two principal components to visualize the result, and cells are clearly separated.</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org">ggplot2</a></span><span class="op">)</span>
 <span class="va">summary</span> <span class="op">=</span> <span class="va">summary</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/match.html">match</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html">colnames</a></span><span class="op">(</span><span class="va">gad_score</span><span class="op">)</span>, <span class="va">summary</span><span class="op">$</span><span class="va">cell</span><span class="op">)</span>, <span class="op">]</span>
 <span class="va">gadPCA</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/prcomp.html">prcomp</a></span><span class="op">(</span><span class="va">gad_score</span><span class="op">)</span><span class="op">$</span><span class="va">rotation</span><span class="op">[</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">15</span><span class="op">]</span>
@@ -194,8 +240,13 @@ chr1    20000 chr1    40000 2</code></pre>
 <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span><span class="op">(</span><span class="va">gadPCA</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">PC1</span>, y <span class="op">=</span> <span class="va">PC2</span>, col <span class="op">=</span> <span class="va">cellTypes</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html">geom_point</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html">theme_bw</a></span><span class="op">(</span>base_size <span class="op">=</span> <span class="fl">10</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_manual.html">scale_color_manual</a></span><span class="op">(</span>breaks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"Hippocampal Granule Cell"</span>, <span class="st">"Mature Oligodendrocyte"</span>, <span class="st">"Microglia Etc."</span><span class="op">)</span>,
                    values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"#1B4F72"</span>, <span class="st">"#F39C12"</span>, <span class="st">"#000000"</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <p><img src="scGAD-tutorial_files/figure-html/PCA%20Result-1.png" width="700"></p>
-<p>Finally, with scRNA-seq data on hand, we can do projection from scGAD to scRNA-seq. For scRNA-seq, we have 1076 cells from Mature Oligodendrocyte, Microglia Etc. and Hippocampal Granule Cell.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+</div>
+</div>
+<div id="projection-of-scgad-on-scrna-seq" class="section level2">
+<h2 class="hasAnchor">
+<a href="#projection-of-scgad-on-scrna-seq" class="anchor"></a>2. Projection of scGAD on scRNA-seq</h2>
+<p>Finally, with scRNA-seq data on hand, we can do projection from scGAD to scRNA-seq. For scRNA-seq, we have 1076 cells from Mature Oligodendrocyte, Microglia Etc. and Hippocampal Granule Cell. These cells are also from <a href="https://www.cell.com/cell/fulltext/S0092-8674(20)31754-2?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS0092867420317542%3Fshowall%3Dtrue">Tan et al. 2021. Cell</a>.</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org">ggplot2</a></span><span class="op">)</span>
 <span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://sjmgarnier.github.io/viridis/">viridis</a></span><span class="op">)</span>
 <span class="co">#&gt; Warning: package 'viridis' was built under R version 4.0.5</span>
@@ -237,20 +288,20 @@ chr1    20000 chr1    40000 2</code></pre>
 <span class="co">#&gt; Warning: The default method for RunUMAP has changed from calling Python UMAP via reticulate to the R-native UWOT using the cosine metric</span>
 <span class="co">#&gt; To use Python UMAP via reticulate, set umap.method to 'umap-learn' and metric to 'correlation'</span>
 <span class="co">#&gt; This message will be shown once per session</span>
-<span class="co">#&gt; 19:53:12 UMAP embedding parameters a = 0.9922 b = 1.112</span>
-<span class="co">#&gt; 19:53:12 Read 1426 rows and found 5 numeric columns</span>
-<span class="co">#&gt; 19:53:12 Using Annoy for neighbor search, n_neighbors = 30</span>
-<span class="co">#&gt; 19:53:12 Building Annoy index with metric = cosine, n_trees = 50</span>
+<span class="co">#&gt; 15:02:49 UMAP embedding parameters a = 0.9922 b = 1.112</span>
+<span class="co">#&gt; 15:02:49 Read 1426 rows and found 5 numeric columns</span>
+<span class="co">#&gt; 15:02:49 Using Annoy for neighbor search, n_neighbors = 30</span>
+<span class="co">#&gt; 15:02:49 Building Annoy index with metric = cosine, n_trees = 50</span>
 <span class="co">#&gt; 0%   10   20   30   40   50   60   70   80   90   100%</span>
 <span class="co">#&gt; [----|----|----|----|----|----|----|----|----|----|</span>
 <span class="co">#&gt; **************************************************|</span>
-<span class="co">#&gt; 19:53:12 Writing NN index file to temp file C:\Users\solei\AppData\Local\Temp\RtmpYZRi5n\file446816031811</span>
-<span class="co">#&gt; 19:53:12 Searching Annoy index using 1 thread, search_k = 3000</span>
-<span class="co">#&gt; 19:53:12 Annoy recall = 100%</span>
-<span class="co">#&gt; 19:53:12 Commencing smooth kNN distance calibration using 1 thread</span>
-<span class="co">#&gt; 19:53:13 Initializing from normalized Laplacian + noise</span>
-<span class="co">#&gt; 19:53:13 Commencing optimization for 500 epochs, with 55294 positive edges</span>
-<span class="co">#&gt; 19:53:16 Optimization finished</span>
+<span class="co">#&gt; 15:02:50 Writing NN index file to temp file C:\Users\solei\AppData\Local\Temp\Rtmp6zGYkx\file4cf871014295</span>
+<span class="co">#&gt; 15:02:50 Searching Annoy index using 1 thread, search_k = 3000</span>
+<span class="co">#&gt; 15:02:50 Annoy recall = 100%</span>
+<span class="co">#&gt; 15:02:50 Commencing smooth kNN distance calibration using 1 thread</span>
+<span class="co">#&gt; 15:02:51 Initializing from normalized Laplacian + noise</span>
+<span class="co">#&gt; 15:02:51 Commencing optimization for 500 epochs, with 55294 positive edges</span>
+<span class="co">#&gt; 15:02:54 Optimization finished</span>
 
 <span class="va">p_celltype</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://satijalab.org/seurat/reference/DimPlot.html">DimPlot</a></span><span class="op">(</span><span class="va">combinedAssay</span>, reduction <span class="op">=</span> <span class="st">"umap"</span>, label <span class="op">=</span> <span class="cn">TRUE</span>, repel <span class="op">=</span> <span class="cn">TRUE</span>, pt.size <span class="op">=</span> <span class="fl">1.3</span>, shape.by <span class="op">=</span> <span class="st">"method"</span>, label.size <span class="op">=</span> <span class="fl">6</span><span class="op">)</span> <span class="op">+</span>
 <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">xlab</a></span><span class="op">(</span><span class="st">"UMAP 1"</span><span class="op">)</span> <span class="op">+</span>

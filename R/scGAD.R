@@ -64,8 +64,8 @@ scGAD = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 4,
           temp = tempcell[J(cchr)]
         }
         
-        gad_score[i] = sum2(.subset2(temp, 4)[temp$V2 %between% c(s1_low[i], s2[i]) &
-                                                temp$V4 %between% c(s1_low[i], s2[i])])
+        gad_score[i] = sum2(.subset2(temp, 5)[temp$binA %between% c(s1_low[i], s2[i]) &
+                                                temp$binB %between% c(s1_low[i], s2[i])])
         pchr = chr[i]
       }
       gad_score
