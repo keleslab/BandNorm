@@ -1,0 +1,209 @@
+---
+title: "scGAD-tutorial"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{scGAD-tutorial}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Introduction
+
+Recent advancements in single-cell technologies enabled the profiling of 3D genome structures in a single-cell fashion. Quantitative tools are needed to fully leverage the unprecedented resolution of single-cell high-throughput chromatin conformation (scHi-C) data and integrate it with other single-cell data modalities. We present single-cell gene associating domain (scGAD) scores as a dimension reduction and exploratory analysis tool for scHi-C data. scGAD enables summarization at the gene level while accounting for inherent gene-level genomic biases. Low-dimensional projections with scGAD capture clustering of cells based on their 3D structures. scGAD enables identifying genes with significant chromatin interactions within and between cell types. We further show that scGAD facilitates the integration of scHi-C data with other single-cell data modalities by enabling its projection onto reference low-dimensional embeddings such as scRNA-seq. 
+Please refer to our manuscript, [scGAD: single-cell gene associating domain scores for exploratory analysis of scHi-C data](https://www.biorxiv.org/content/10.1101/2021.10.22.465520v1), on BioRxiv for the comprehensive study of scGAD.
+
+![](../figures/Fig1A.png)
+
+In this tutorial, we will walk you through: 
+
+- 1. The usage of scGAD function to project single-cell Hi-C contact matrices into gene x cell scGAD score matrix. 
+
+- 2. Integration of cells from the scHi-C data with scRNA-seq reference panel through the projection of scGAD score matrix onto lower-dimensional embeddings of scRNA-seq.
+
+## Installation
+
+Please refer to the `BandNorm` R package installation section in [BandNorm tutorial](https://sshen82.github.io/BandNorm/articles/BandNorm-tutorial.html). scGAD is one of the key functions of `BandNorm` R package.
+
+## 1. scGAD Usage 
+
+### 1.1 Format of input scHi-C data
+
+scGAD function allows two types of formats for the input data. It can be **A.** the path to the scHi-c contact matrices files or **B.** a data.frame R object containing all the interactions from all the cells with cell name appended in each row.
+
+**A.** A path to the folder where the single-cell Hi-C contact matrices are saved. Under such directory, each file should be in the form of 5-columns bed file format, namely ```chrA, binA, chrB, binB, count```, showing the interactions for corresponding individual cell:
+
+```
+chr1    0       chr1    10000 9
+chr1    10000   chr1    10000 20
+chr1    0       chr1    20000 2
+chr1    10000   chr1    20000 4
+chr1    20000   chr1    20000 22
+chr1    10000   chr1    30000 1
+chr1    20000   chr1    30000 11
+chr1    30000   chr1    30000 197
+chr1    10000   chr1    40000 1
+chr1    20000   chr1    40000 2
+```
+
+**B.** Another way is to provide a data.frame object, which includes all the interactions information plus the cell name where such interactions occur. The data frame should have 5 columns and take the exact column name as ```chrom, binA, binB, count, cell```. The column names in here should be exactly the same as stated, and the order of columns doesn't matter. Option B is not recommended for the large volume of single-cell Hi-C data sets, especially when it is implemented with limited computational resources like a laptop. However, it can be fast if it is run on servers or computers where sufficient memory is available to store such large data.frame object.
+
+```
+> head(scgad_df, 10)
+chrom   binA    binB    count   cell
+chr1    0       10000   9       cell_1
+chr1    10000   10000   20      cell_1
+chr1    0       20000   2       cell_1
+chr1    10000   20000   4       cell_1
+chr1    20000   20000   22      cell_1
+chr1    10000   30000   1       cell_2
+chr1    20000   30000   11      cell_2
+chr1    30000   30000   197     cell_2
+chr1    10000   40000   1       cell_2
+chr1    20000   40000   2       cell_3
+```
+
+### 1.2 Format of input gene coordinates.
+
+A four columns data.table or data.frame object is needed to show the gene starting and ending coordinates. We have wrapped up 4 commonly used gene annotation files in the `BandNorm` package, mm9, mm10, hg19 and hg38, which can be directly used by calling ```mm9Annotations```, ```mm10Annotations```, ```hg19Annotations```, and ```hg38Annotations```. Below are the first 5 rows of mm9Annotations. The first column is chromosome, s1 and s2 are the starting and ending coordinates of the gene with the strand in the fourth column and gene name in the last column. `scGAD` function will automatically extend 1kb upstream of 5' end of each gene to include the promoter region. Users can create their own gene coordinate input variable based on the gene annotation files from [GENCODE](www.gencodegenes.org).
+
+````
+> head(mm9Annotations, 5)
+chr  s1      s2         strand  gene_name
+chr1 3195982 3661579        -       Xkr4
+chr1 4334224 4350473        -       Rp1
+chr1 4481009 4486494        -       Sox17
+chr1 4763287 4775820        -       Mrpl15
+chr1 4797869 4876851        +       Lypla1
+```
+
+### 1.3 Demo run of scGAD
+
+The demo data used for illustrations were generated based on the real scHi-C data from [Tan et al. 2021. Cell](https://www.cell.com/cell/fulltext/S0092-8674(20)31754-2?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS0092867420317542%3Fshowall%3Dtrue). 350 cells were randomly sampled from three major cell types, namely Mature Oligodendrocyte, Microglia Etc. and Hippocampal Granule Cell. The aim of the demo data is to show the format of the input object to `scGAD` function and how to run `scGAD` function to get the scGAD scores.
+
+```{r scGAD}
+library(BandNorm)
+library(curl)
+h = new_handle(dirlistonly=TRUE)
+con = curl("http://ftp.cs.wisc.edu/pub/users/kelesgroup/siqi/scGAD/scGADExample.rda", "r", h)
+load(con)
+close(con)
+
+gad_score = scGAD(hic_df = scgad_df, genes = geneANNO, depthNorm = TRUE)
+```
+
+A successful `scGAD` run will give you the scGAD scores like the following. ```gad_score``` for the demo data run is a 2395 x 350 matrix.
+
+```
+> head(gad_score)
+        cell_1    cell_2    cell_3 ... ...
+Xkr4    -2.29     -0.87     -0.29  ... ...
+Rp1     0.42      0.09      -1.93  ... ...
+Rgs20   -0.14     -1.25     0.16   ... ...
+```
+
+### 1.4 Parallel running
+
+`scGAD` function can be accelerated considerably through the parallel running mode using parameters ```cores``` and ```threads```. More specifically, ```cores``` means the number of CPUs used for parallel processing of cells with each CPU handling one individual cell's related (1) data reading, (2) score calculation. For instance, `cores = 4` means that scGAD scores are processed for four cells simultaneously. Additionally, `threads` indicates the number of parallel running for data reading procedure per core (i.e., per cell). In other words, we can deploy multiple threads for each cell to handle the data reading step, which otherwise tends to take a long time. The general recommendation is: a. keep the cores x threads value to be smaller than the total number of CPUs available. b. assign a larger value to threads than cores for better performance. For example, suppose there are 50 CPUs available:
+
+```{r scGAD multicore, eval = FALSE}
+gad_score = scGAD(hic_df = scgad_df, genes = geneANNO, depthNorm = TRUE, cores = 4, threads = 12)
+```
+
+### 1.5 Visualizion of the lower-dimensional representations of scGAD scores
+
+Cell types separation can be visualized using PCA or t-SNE or UMAP. Showing below is the PCA dimension reduction of scGAD scores, and the first two principal components can nicely separate the three major cell types.
+
+```{r PCA Result, fig.width = 10, fig.height = 6}
+library(ggplot2)
+
+summary = summary[match(colnames(gad_score), summary$cell), ]
+gadPCA = prcomp(gad_score)$rotation[, 1:15]
+gadPCA = data.frame(gadPCA, cellTypes = summary$`cell-type cluster`)
+
+ggplot(gadPCA, aes(x = PC1, y = PC2, col = cellTypes)) + 
+    geom_point() + 
+    theme_bw(base_size = 18) + 
+    scale_color_manual(
+        breaks = c("Hippocampal Granule Cell", "Mature Oligodendrocyte", "Microglia Etc."),
+        values = c("#1B4F72", "#F39C12", "#000000")
+    )
+```
+
+## 2. Projection of scGAD on scRNA-seq
+
+In this section, we will show how to project cells from scHi-C data onto the reference panel constructed by the low-dimensional embeddings of scRNA-seq. We also generated scRNA-seq demo data based on the MALBAC-DT from [Tan et al. 2021. Cell](https://www.cell.com/cell/fulltext/S0092-8674(20)31754-2?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS0092867420317542%3Fshowall%3Dtrue) which has the same cell system as the scHi-C data. We sampled 1076 cells from Mature Oligodendrocyte, Microglia Etc. and Hippocampal Granule Cell, three cell types as same as the scHi-C demo data.
+
+```{r Projection, fig.width = 10, fig.height = 6}
+library(ggplot2)
+library(viridis)
+library(dplyr)
+library(gridExtra)
+library(ggpubr)
+library(Seurat)
+
+DataList = list(scGAD = gad_score, scRNAseq = RNA)
+cellTypeList = list(scGAD = summary$`cell-type cluster`, scRNAseq = cellTypeRNA)
+names(cellTypeList[[1]]) = summary$cell
+names(cellTypeList[[2]]) = colnames(RNA)
+
+combinedAssay = runProjection(DataList, doNorm = c(FALSE, FALSE), cellTypeList)
+
+p_celltype = DimPlot(combinedAssay, reduction = "umap", label = TRUE, repel = TRUE, 
+                    pt.size = 1.3, shape.by = "method", label.size = 6) +
+    xlab("UMAP 1") +
+    ylab("UMAP 2") +
+    scale_color_manual(
+        breaks = c("Hippocampal Granule Cell", "Mature Oligodendrocyte", "Microglia Etc."),
+        values = c("#1B4F72", "#F39C12", "#000000")
+    ) +
+    rremove("legend")
+
+
+pRNA = combinedAssay@reductions$umap@cell.embeddings %>% 
+    data.frame %>% 
+    mutate(celltype = c(cellTypeList[[1]], cellTypeList[[2]]), label = c(rep("scGAD", length(cellTypeList[[1]])), rep("scRNA-seq", length(cellTypeList[[2]])))) %>%
+    filter(label == "scRNA-seq") %>%
+    ggplot(aes(x = UMAP_1, y = UMAP_2, color = celltype)) +
+        geom_point(size = 0.3) +
+        theme_pubr(base_size = 14) +
+        scale_color_manual(
+            breaks = c("Hippocampal Granule Cell", "Mature Oligodendrocyte", "Microglia Etc."),
+            values = c("#1B4F72", "#F39C12", "#000000")
+        ) +
+        xlab("UMAP 1") +
+        ylab("UMAP 2") +
+        rremove("legend") +
+        ggtitle("Single-cell Transcriptomics") + 
+        theme(axis.title = element_blank())
+
+
+pGAD = combinedAssay@reductions$umap@cell.embeddings %>% 
+    data.frame %>% 
+    mutate(celltype = c(cellTypeList[[1]], cellTypeList[[2]]), label = c(rep("scGAD", length(cellTypeList[[1]])), rep("scRNA-seq", length(cellTypeList[[2]])))) %>%
+    filter(label == "scGAD") %>%
+    ggplot(aes(x = UMAP_1, y = UMAP_2, color = celltype)) +
+    geom_point(size = 0.3) +
+    theme_pubr(base_size = 14) +
+    scale_color_manual(
+        breaks = c("Hippocampal Granule Cell", "Mature Oligodendrocyte", "Microglia Etc."),
+        values = c("#1B4F72", "#F39C12", "#000000")
+    ) +
+    xlab("UMAP 1") +
+    ylab("UMAP 2") +
+    rremove("legend") +
+    ggtitle("Single-cell 3D Genomics") +
+    theme(axis.title = element_blank())
+
+
+lay = rbind(c(1, 1, 2))
+grid.arrange(p_celltype, arrangeGrob(pRNA, pGAD, ncol = 1, nrow = 2), layout_matrix = lay)
+```
+
+

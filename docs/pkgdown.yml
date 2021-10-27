@@ -3,8 +3,8 @@ pkgdown: 1.6.1
 pkgdown_sha: ~
 articles:
   BandNorm-tutorial: BandNorm-tutorial.html
-  scGAD-tutorial: scGAD-tutorial.html
-last_built: 2021-10-25T20:13Z
+  scGAD_tutorial: scGAD_tutorial.html
+last_built: 2021-10-27T23:47Z
 urls:
   reference: http://sshen82.github.io/BandNorm/reference
   article: http://sshen82.github.io/BandNorm/articles

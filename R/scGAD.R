@@ -75,6 +75,7 @@ scGAD = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 4,
   colnames(output) = names
   rownames(output) = genes$gene_name
   output = output[rowSums(output) > 0, ]
+  output = output[!is.na(rowSums(output)), ]
   
   if (depthNorm) {
     output = t(t(output) / colSums(output)) * 1e04
