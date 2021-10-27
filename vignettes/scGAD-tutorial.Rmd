@@ -112,6 +112,16 @@ Rp1     0.42      0.09      -1.93
 Rgs20   -0.14     -1.25     0.16
 ```
 
+### 1.4 Parallel running
+
+In scGAD, we also allows for parallel running for `scGAD` with parameter `cores` and `threads`. In here, cores means number of CPUs used, and each CPU focuses on one particular cell during the iteration. If `cores = 4`, then the scGAD score for four cells can be simutaneously calculated. `threads` also indicates number of CPUs, but this is used specifically for `fread` function in `data.table`. By default, `data.table` will likely to overload your CPUs, so it is important to manually set this number. It is recommended to set `threads` so that threads * cores is smaller than the total number of CPUs.
+
+```{r scGAD multicore, eval = FALSE}
+gad_score = scGAD(hic_df = scgad_df, genes = geneANNO, depthNorm = TRUE, cores = 4, threads = 12)
+```
+
+### 1.5 Visualizion of the lower-dimension representation of scGAD
+
 Then, you can use PCA to first perform dimensionality-reduction, and choose the first two principal components to visualize the result, and cells are clearly separated.
 
 ```{r PCA Result}

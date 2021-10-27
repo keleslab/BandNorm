@@ -231,8 +231,19 @@ chr1  5578574  5596212         Oprk1</code></pre>
 Xkr4    -2.29     -0.87     -0.29
 Rp1     0.42      0.09      -1.93
 Rgs20   -0.14     -1.25     0.16</code></pre>
-<p>Then, you can use PCA to first perform dimensionality-reduction, and choose the first two principal components to visualize the result, and cells are clearly separated.</p>
+</div>
+<div id="parallel-running" class="section level3">
+<h3 class="hasAnchor">
+<a href="#parallel-running" class="anchor"></a>1.4 Parallel running</h3>
+<p>In scGAD, we also allows for parallel running for <code>scGAD</code> with parameter <code>cores</code> and <code>threads</code>. In here, cores means number of CPUs used, and each CPU focuses on one particular cell during the iteration. If <code>cores = 4</code>, then the scGAD score for four cells can be simutaneously calculated. <code>threads</code> also indicates number of CPUs, but this is used specifically for <code>fread</code> function in <code>data.table</code>. By default, <code>data.table</code> will likely to overload your CPUs, so it is important to manually set this number. It is recommended to set <code>threads</code> so that threads * cores is smaller than the total number of CPUs.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">gad_score</span> <span class="op">=</span> <span class="fu"><a href="../reference/scGAD.html">scGAD</a></span><span class="op">(</span>hic_df <span class="op">=</span> <span class="va">scgad_df</span>, genes <span class="op">=</span> <span class="va">geneANNO</span>, depthNorm <span class="op">=</span> <span class="cn">TRUE</span>, cores <span class="op">=</span> <span class="fl">4</span>, threads <span class="op">=</span> <span class="fl">12</span><span class="op">)</span></code></pre></div>
+</div>
+<div id="visualizion-of-the-lower-dimension-representation-of-scgad" class="section level3">
+<h3 class="hasAnchor">
+<a href="#visualizion-of-the-lower-dimension-representation-of-scgad" class="anchor"></a>1.5 Visualizion of the lower-dimension representation of scGAD</h3>
+<p>Then, you can use PCA to first perform dimensionality-reduction, and choose the first two principal components to visualize the result, and cells are clearly separated.</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org">ggplot2</a></span><span class="op">)</span>
 <span class="va">summary</span> <span class="op">=</span> <span class="va">summary</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/match.html">match</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html">colnames</a></span><span class="op">(</span><span class="va">gad_score</span><span class="op">)</span>, <span class="va">summary</span><span class="op">$</span><span class="va">cell</span><span class="op">)</span>, <span class="op">]</span>
 <span class="va">gadPCA</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/prcomp.html">prcomp</a></span><span class="op">(</span><span class="va">gad_score</span><span class="op">)</span><span class="op">$</span><span class="va">rotation</span><span class="op">[</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">15</span><span class="op">]</span>
@@ -246,7 +257,7 @@ Rgs20   -0.14     -1.25     0.16</code></pre>
 <h2 class="hasAnchor">
 <a href="#projection-of-scgad-on-scrna-seq" class="anchor"></a>2. Projection of scGAD on scRNA-seq</h2>
 <p>Finally, with scRNA-seq data on hand, we can do projection from scGAD to scRNA-seq. For scRNA-seq, we have 1076 cells from Mature Oligodendrocyte, Microglia Etc. and Hippocampal Granule Cell. These cells are also from <a href="https://www.cell.com/cell/fulltext/S0092-8674(20)31754-2?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS0092867420317542%3Fshowall%3Dtrue">Tan et al. 2021. Cell</a>.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org">ggplot2</a></span><span class="op">)</span>
 <span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://sjmgarnier.github.io/viridis/">viridis</a></span><span class="op">)</span>
 <span class="co">#&gt; Warning: package 'viridis' was built under R version 4.0.5</span>
@@ -288,20 +299,20 @@ Rgs20   -0.14     -1.25     0.16</code></pre>
 <span class="co">#&gt; Warning: The default method for RunUMAP has changed from calling Python UMAP via reticulate to the R-native UWOT using the cosine metric</span>
 <span class="co">#&gt; To use Python UMAP via reticulate, set umap.method to 'umap-learn' and metric to 'correlation'</span>
 <span class="co">#&gt; This message will be shown once per session</span>
-<span class="co">#&gt; 15:02:49 UMAP embedding parameters a = 0.9922 b = 1.112</span>
-<span class="co">#&gt; 15:02:49 Read 1426 rows and found 5 numeric columns</span>
-<span class="co">#&gt; 15:02:49 Using Annoy for neighbor search, n_neighbors = 30</span>
-<span class="co">#&gt; 15:02:49 Building Annoy index with metric = cosine, n_trees = 50</span>
+<span class="co">#&gt; 15:55:48 UMAP embedding parameters a = 0.9922 b = 1.112</span>
+<span class="co">#&gt; 15:55:48 Read 1426 rows and found 5 numeric columns</span>
+<span class="co">#&gt; 15:55:48 Using Annoy for neighbor search, n_neighbors = 30</span>
+<span class="co">#&gt; 15:55:48 Building Annoy index with metric = cosine, n_trees = 50</span>
 <span class="co">#&gt; 0%   10   20   30   40   50   60   70   80   90   100%</span>
 <span class="co">#&gt; [----|----|----|----|----|----|----|----|----|----|</span>
 <span class="co">#&gt; **************************************************|</span>
-<span class="co">#&gt; 15:02:50 Writing NN index file to temp file C:\Users\solei\AppData\Local\Temp\Rtmp6zGYkx\file4cf871014295</span>
-<span class="co">#&gt; 15:02:50 Searching Annoy index using 1 thread, search_k = 3000</span>
-<span class="co">#&gt; 15:02:50 Annoy recall = 100%</span>
-<span class="co">#&gt; 15:02:50 Commencing smooth kNN distance calibration using 1 thread</span>
-<span class="co">#&gt; 15:02:51 Initializing from normalized Laplacian + noise</span>
-<span class="co">#&gt; 15:02:51 Commencing optimization for 500 epochs, with 55294 positive edges</span>
-<span class="co">#&gt; 15:02:54 Optimization finished</span>
+<span class="co">#&gt; 15:55:48 Writing NN index file to temp file C:\Users\solei\AppData\Local\Temp\RtmpMzjJlJ\file3a10656d3c02</span>
+<span class="co">#&gt; 15:55:48 Searching Annoy index using 1 thread, search_k = 3000</span>
+<span class="co">#&gt; 15:55:48 Annoy recall = 100%</span>
+<span class="co">#&gt; 15:55:48 Commencing smooth kNN distance calibration using 1 thread</span>
+<span class="co">#&gt; 15:55:49 Initializing from normalized Laplacian + noise</span>
+<span class="co">#&gt; 15:55:49 Commencing optimization for 500 epochs, with 55294 positive edges</span>
+<span class="co">#&gt; 15:55:52 Optimization finished</span>
 
 <span class="va">p_celltype</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://satijalab.org/seurat/reference/DimPlot.html">DimPlot</a></span><span class="op">(</span><span class="va">combinedAssay</span>, reduction <span class="op">=</span> <span class="st">"umap"</span>, label <span class="op">=</span> <span class="cn">TRUE</span>, repel <span class="op">=</span> <span class="cn">TRUE</span>, pt.size <span class="op">=</span> <span class="fl">1.3</span>, shape.by <span class="op">=</span> <span class="st">"method"</span>, label.size <span class="op">=</span> <span class="fl">6</span><span class="op">)</span> <span class="op">+</span>
 <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">xlab</a></span><span class="op">(</span><span class="st">"UMAP 1"</span><span class="op">)</span> <span class="op">+</span>
