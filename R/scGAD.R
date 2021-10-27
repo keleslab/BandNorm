@@ -3,7 +3,7 @@
 #' This function allows you to calculate GAD value for each gene in each cell.
 #' @param path A path to the single-cell Hi-C data. The data format should be the same as in the bandnorm hic_df input.
 #' @param hic_df You can also load dataframe containing all Hi-C data to here, but it is not recommended, since in scGAD, we are dealing with high resolution matrices, and it will consume a lot of memory if we load it directly.
-#' @param genes A data frame containing 4 columns: chrmomsome, start, end, gene name.
+#' @param genes A data frame containing 5 columns: chrmomsome, start, end, strand, gene name.
 #' @param cores Number of cores used for parallel running. Default is 4.
 #' @param threads Number of threads for fread function, default is 8.
 #' @param depthNorm Whether to normalize the sequencing depth effect. Default is TRUE.
@@ -15,8 +15,8 @@ scGAD = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 4,
   setDTthreads(threads)
   discardCounts = max(genes$s2 - genes$s1)
   chr = genes$chr
-  s1_low <- genes$s1 - 10000
-  s2 <- genes$s2
+  s1_low <- ifelse(genes$strand == "+", genes$s1 - 1000, genes$s1)
+  s2 <- ifelse(genes$strand == "-", genes$s2, genes$s2 + 1000)
   if (is.null(hic_df)){
     cl <- makeCluster(cores[1])
     registerDoParallel(cl)

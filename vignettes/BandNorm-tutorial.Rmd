@@ -112,7 +112,7 @@ embedding[1:10, ]
 
 Finally, using the embedding, you can use UMAP or tSNE to get a projection of all the cells on the 2D plane. If you have the cell-type information or batch information, it is possible to color them on the plot.
 
-```{r plot_embedding}
+```{r plot_embedding, fig.width = 10, fig.height = 6}
 plot_embedding(embedding, "UMAP", cell_info = cell_type, label = "Cell Type")
 plot_embedding(embedding, "UMAP", cell_info = batch, label = "Batch")
 ```

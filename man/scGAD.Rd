@@ -14,11 +14,11 @@ scGAD(
 )
 }
 \arguments{
-\item{path}{A path to the single-cell Hi-C data. The data format should be the same as bandnorm input.}
+\item{path}{A path to the single-cell Hi-C data. The data format should be the same as in the bandnorm hic_df input.}
 
 \item{hic_df}{You can also load dataframe containing all Hi-C data to here, but it is not recommended, since in scGAD, we are dealing with high resolution matrices, and it will consume a lot of memory if we load it directly.}
 
-\item{genes}{A data frame containing 4 columns: chrmomsome, start, end, gene name.}
+\item{genes}{A data frame containing 5 columns: chrmomsome, start, end, strand, gene name.}
 
 \item{depthNorm}{Whether to normalize the sequencing depth effect. Default is TRUE.}
 
