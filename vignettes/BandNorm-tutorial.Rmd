@@ -38,7 +38,7 @@ devtools::install_github("immunogenomics/harmony")
 BandNorm can be installed from Github:
 
 ```{r install-BandNorm, eval = FALSE}
-devtools::install_github('sshen82/BandNorm', build_vignettes = TRUE)
+devtools::install_github('sshen82/BandNorm', build_vignettes = FALSE)
 ```
 
 Also, if the user doesn't have default R path writing permission, it is possible to install the package to the personal library:

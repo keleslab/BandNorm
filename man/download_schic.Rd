@@ -19,5 +19,5 @@ download_schic(cell_line, cell_type = NULL, cell_path, summary_path = NULL)
 This function allows you to download the currently existing single cell Hi-C data. The data is 1mb resolution, and there are basic information for each of the cell, such as cell type, batch, etc.
 }
 \examples{
-download_schic("Li2019", cell_path = getwd())
+# download_schic("Li2019", cell_path = getwd())
 }

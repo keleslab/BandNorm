@@ -7,7 +7,7 @@
 #' @param summary_path Indicate the output path for summary data containing information of batch, cell type, depth and sparsity. Default is NULL.
 #' @export
 #' @examples
-#' download_schic("Li2019", cell_path = getwd())
+#' # download_schic("Li2019", cell_path = getwd())
 download_schic = function(cell_line, cell_type = NULL, cell_path, summary_path = NULL) {
   if (!cell_line %in% c("Kim2020", "Lee2019", "Li2019", "Ramani2017")){
     stop("We currently don't support other cell lines. Please use one of Kim2020, Lee2019, Li2019, Ramani2017.")

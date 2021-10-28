@@ -1,6 +1,8 @@
-# BandNorm
+# BandNorm and scGAD
 
 Ye Zheng\*, Siqi Shen\* and Sündüz Keleş. Normalization and De-noising of single-cell Hi-C Data with BandNorm and 3DVI. bioRxiv (2021). * contribute equally.
+
+Siqi Shen, Ye Zheng* and Sündüz Keleş*, scGAD: single-cell gene associating domain scores for exploratory analysis of scHi-C data. bioRxiv (2021). * corresponding authors.
 
 ## What is BandNorm?
 
@@ -10,11 +12,15 @@ To explicitly capture chromatin conformation features and distinguish cells base
 
 <img src="./figures/bandnorm_intro.png" alt="BandNorm" width="700px">
 
-There are four functions, `download_schic`, `bandnorm`, `create_embedding`, and `plot_embedding`.
-`download_schic` downloads one of the currently available single-cell Hi-C data cleaned by us,
-`bandnorm` takes in sparse matrices and normalize them using BandNorm method, 
-`create_embedding` summarizes the data into a PCA embedding in preparation for clustering and lower dimension embedding,
-and `plot_embedding` calculates UMAP or tSNE embedding from the PCA obtained from `create_embedding`, and plots the resulting embedding.
+## What is scGAD?
+
+Recent advancements in single-cell technologies enabled the profiling of 3D genome structures in a single-cell fashion. Quantitative tools are needed to fully leverage the unprecedented resolution of single-cell high-throughput chromatin conformation (scHi-C) data and integrate it with other single-cell data modalities. We present single-cell gene associating domain (scGAD) scores as a dimension reduction and exploratory analysis tool for scHi-C data. scGAD enables summarization at the gene level while accounting for inherent gene-level genomic biases. Low-dimensional projections with scGAD capture clustering of cells based on their 3D structures. scGAD enables identifying genes with significant chromatin interactions within and between cell types. We further show that scGAD facilitates the integration of scHi-C data with other single-cell data modalities by enabling its projection onto reference low-dimensional embeddings such as scRNA-seq. 
+
+<img src="./figures/Fig1A.png" alt="BandNorm" width="700px">
+
+There are seven functions, `download_schic`, `bandnorm`, `bandnorm_juicer`, `create_embedding`, and `plot_embedding`, `scGAD` and `runProjection`.
+`download_schic` downloads one of the currently available single-cell Hi-C data cleaned by us, `bandnorm` takes in sparse matrices and normalize them using BandNorm method, and `bandnorm_juicer` allows using .hic data to perform BandNorm, `create_embedding` summarizes the data into a PCA embedding in preparation for clustering and lower dimension embedding, `plot_embedding` calculates UMAP or tSNE embedding from the PCA obtained from `create_embedding`, and plots the resulting embedding. `scGAD` obtains scGAD score from single-cell Hi-C data, and `runProjection` projects scGAD score on other single-cell modalities.
+
 (See vignette (`browseVignettes("BandNorm"))` or visit [BandNorm website](https://sshen82.github.io/BandNorm) for more detail.)
 
 ## Installation
@@ -31,10 +37,10 @@ library(devtools)
 install_github("immunogenomics/harmony")
 ```
 
-`BandNorm` can be installed from Github:
+`BandNorm` can be installed from Github (User can change build_vignettes to TRUE to locally compile the vignettes. Note that the vignettes are also available online at BandNorm tutorial and scGAD tutorial ([BandNorm Method for single-cell Hi-C • BandNorm (sshen82.github.io)](https://sshen82.github.io/BandNorm/index.html)):
 
 ```
-devtools::install_github('sshen82/BandNorm', build_vignettes = TRUE)
+devtools::install_github('sshen82/BandNorm', build_vignettes = FALSE)
 library(BandNorm)
 ```
 
