@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Juicer .hic version of BandNorm — bandnorm_juicer • BandNorm</title>
+<title>Cooler hic version of BandNorm (Thanks skelviper for supporting the code!) — bandnorm_cooler • BandNorm</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="Juicer .hic version of BandNorm — bandnorm_juicer" />
-<meta property="og:description" content="This function allows you to calculate the BandNorm normalization using the inputs that are Juicer .hic format, and the output won't be different from the original version." />
+<meta property="og:title" content="Cooler hic version of BandNorm (Thanks skelviper for supporting the code!) — bandnorm_cooler" />
+<meta property="og:description" content="This function allows you to calculate the BandNorm normalization using the inputs that are cooler .mcool format. (We might also add .scool format.)" />
 
 
 
@@ -128,45 +128,21 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Juicer .hic version of BandNorm</h1>
+    <h1>Cooler hic version of BandNorm (Thanks skelviper for supporting the code!)</h1>
     
-    <div class="hidden name"><code>bandnorm_juicer.Rd</code></div>
+    <div class="hidden name"><code>bandnorm_cooler.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>This function allows you to calculate the BandNorm normalization using the inputs that are Juicer .hic format, and the output won't be different from the original version.</p>
+    <p>This function allows you to calculate the BandNorm normalization using the inputs that are cooler .mcool format. (We might also add .scool format.)</p>
     </div>
 
-    <pre class="usage"><span class='fu'>bandnorm_juicer</span><span class='op'>(</span>path <span class='op'>=</span> <span class='cn'>NULL</span>, <span class='va'>resolution</span>, <span class='va'>chroms</span>, save <span class='op'>=</span> <span class='cn'>TRUE</span>, save_path <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>bandnorm_cooler</span><span class='op'>(</span><span class='va'>coolerPath</span>, <span class='va'>resolution</span>, cellname <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span></pre>
 
-    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
-    <table class="ref-arguments">
-    <colgroup><col class="name" /><col class="desc" /></colgroup>
-    <tr>
-      <th>path</th>
-      <td><p>The path for all the cells in a directory. There can be sub-directories.</p></td>
-    </tr>
-    <tr>
-      <th>resolution</th>
-      <td><p>Specify the resolution from the hic file."</p></td>
-    </tr>
-    <tr>
-      <th>chroms</th>
-      <td><p>Specify the chromosomes to use, the format is a string like "1". If the input is "all", it will include all the intra-chromosomal bin pairs.</p></td>
-    </tr>
-    <tr>
-      <th>save</th>
-      <td><p>Whether to save each normalized cells. Default is TRUE. Note that if don't have large memory on your computer, and you need to use create_embedding function, it is highly recommended to save the cells because it helps lower the cost of memory in this function.</p></td>
-    </tr>
-    <tr>
-      <th>save_path</th>
-      <td><p>Indicate the output path for normalized cells. Only need it when "save" parameter is TRUE. Default is NULL.</p></td>
-    </tr>
-    </table>
 
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='co'># We will have a thorough example for this part!</span>
+    <pre class="examples"><div class='input'><span class='co'># Will add example here.</span>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

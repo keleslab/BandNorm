@@ -30,7 +30,8 @@ Depends:
     matrixStats,
     Seurat,
     strawr,
-    rmarkdown
+    rmarkdown,
+    viridis
 RoxygenNote: 7.1.1
 Suggests: 
     knitr,

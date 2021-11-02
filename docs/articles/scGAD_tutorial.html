@@ -208,6 +208,10 @@ chr1    20000   40000   2       cell_3</code></pre>
 <span class="co">#&gt; Warning: package 'strawr' was built under R version 4.0.5</span>
 <span class="co">#&gt; Loading required package: rmarkdown</span>
 <span class="co">#&gt; Warning: package 'rmarkdown' was built under R version 4.0.5</span>
+<span class="co">#&gt; Loading required package: viridis</span>
+<span class="co">#&gt; Warning: package 'viridis' was built under R version 4.0.5</span>
+<span class="co">#&gt; Loading required package: viridisLite</span>
+<span class="co">#&gt; Warning: package 'viridisLite' was built under R version 4.0.5</span>
 <span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/jeroen/curl">curl</a></span><span class="op">)</span>
 <span class="co">#&gt; Warning: package 'curl' was built under R version 4.0.5</span>
 <span class="co">#&gt; Using libcurl 7.64.1 with Schannel</span>
@@ -259,9 +263,6 @@ Rgs20   -0.14     -1.25     0.16   ... ...</code></pre>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org">ggplot2</a></span><span class="op">)</span>
 <span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://sjmgarnier.github.io/viridis/">viridis</a></span><span class="op">)</span>
-<span class="co">#&gt; Warning: package 'viridis' was built under R version 4.0.5</span>
-<span class="co">#&gt; Loading required package: viridisLite</span>
-<span class="co">#&gt; Warning: package 'viridisLite' was built under R version 4.0.5</span>
 <span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org">dplyr</a></span><span class="op">)</span>
 <span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">gridExtra</span><span class="op">)</span>
 <span class="co">#&gt; </span>
@@ -298,20 +299,20 @@ Rgs20   -0.14     -1.25     0.16   ... ...</code></pre>
 <span class="co">#&gt; Warning: The default method for RunUMAP has changed from calling Python UMAP via reticulate to the R-native UWOT using the cosine metric</span>
 <span class="co">#&gt; To use Python UMAP via reticulate, set umap.method to 'umap-learn' and metric to 'correlation'</span>
 <span class="co">#&gt; This message will be shown once per session</span>
-<span class="co">#&gt; 20:30:15 UMAP embedding parameters a = 0.9922 b = 1.112</span>
-<span class="co">#&gt; 20:30:15 Read 1426 rows and found 5 numeric columns</span>
-<span class="co">#&gt; 20:30:15 Using Annoy for neighbor search, n_neighbors = 30</span>
-<span class="co">#&gt; 20:30:15 Building Annoy index with metric = cosine, n_trees = 50</span>
+<span class="co">#&gt; 19:44:49 UMAP embedding parameters a = 0.9922 b = 1.112</span>
+<span class="co">#&gt; 19:44:49 Read 1426 rows and found 5 numeric columns</span>
+<span class="co">#&gt; 19:44:49 Using Annoy for neighbor search, n_neighbors = 30</span>
+<span class="co">#&gt; 19:44:49 Building Annoy index with metric = cosine, n_trees = 50</span>
 <span class="co">#&gt; 0%   10   20   30   40   50   60   70   80   90   100%</span>
 <span class="co">#&gt; [----|----|----|----|----|----|----|----|----|----|</span>
 <span class="co">#&gt; **************************************************|</span>
-<span class="co">#&gt; 20:30:16 Writing NN index file to temp file C:\Users\solei\AppData\Local\Temp\RtmpOIqCzl\file19b46b6f49a8</span>
-<span class="co">#&gt; 20:30:16 Searching Annoy index using 1 thread, search_k = 3000</span>
-<span class="co">#&gt; 20:30:16 Annoy recall = 100%</span>
-<span class="co">#&gt; 20:30:16 Commencing smooth kNN distance calibration using 1 thread</span>
-<span class="co">#&gt; 20:30:17 Initializing from normalized Laplacian + noise</span>
-<span class="co">#&gt; 20:30:17 Commencing optimization for 500 epochs, with 55332 positive edges</span>
-<span class="co">#&gt; 20:30:20 Optimization finished</span>
+<span class="co">#&gt; 19:44:49 Writing NN index file to temp file C:\Users\solei\AppData\Local\Temp\RtmpGSnNuM\file36c432a0b5f</span>
+<span class="co">#&gt; 19:44:49 Searching Annoy index using 1 thread, search_k = 3000</span>
+<span class="co">#&gt; 19:44:49 Annoy recall = 100%</span>
+<span class="co">#&gt; 19:44:49 Commencing smooth kNN distance calibration using 1 thread</span>
+<span class="co">#&gt; 19:44:50 Initializing from normalized Laplacian + noise</span>
+<span class="co">#&gt; 19:44:50 Commencing optimization for 500 epochs, with 55332 positive edges</span>
+<span class="co">#&gt; 19:44:53 Optimization finished</span>
 
 <span class="va">p_celltype</span> <span class="op">=</span> <span class="fu"><a href="https://satijalab.org/seurat/reference/DimPlot.html">DimPlot</a></span><span class="op">(</span><span class="va">combinedAssay</span>, reduction <span class="op">=</span> <span class="st">"umap"</span>, label <span class="op">=</span> <span class="cn">TRUE</span>, repel <span class="op">=</span> <span class="cn">TRUE</span>, 
                     pt.size <span class="op">=</span> <span class="fl">1.3</span>, shape.by <span class="op">=</span> <span class="st">"method"</span>, label.size <span class="op">=</span> <span class="fl">6</span><span class="op">)</span> <span class="op">+</span>
