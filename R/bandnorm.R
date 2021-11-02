@@ -7,7 +7,7 @@
 #' @param summary_path Indicate the output path for summary data containing information of batch, cell type, depth and sparsity. Default is NULL.
 #' @export
 #' @examples
-#' # download_schic("Li2019", cell_path = getwd())
+#' download_schic("Li2019", cell_path = getwd())
 download_schic = function(cell_line, cell_type = NULL, cell_path, summary_path = NULL) {
   if (!cell_line %in% c("Kim2020", "Lee2019", "Li2019", "Ramani2017")){
     stop("We currently don't support other cell lines. Please use one of Kim2020, Lee2019, Li2019, Ramani2017.")
@@ -99,8 +99,8 @@ bandnorm = function(path = NULL, hic_df = NULL, save = TRUE, save_path = NULL) {
   alpha_j <- band_info %>% group_by(chrom, diag) %>% summarise(depth = mean(band_depth))
 
   hic_df <- hic_df %>% left_join(alpha_j, by = c("chrom", "diag")) %>% left_join(band_info,
-                                                                                 by = c("chrom", "diag", "cell")) %>% mutate(BandNorm = count/band_depth * depth) %>% 
-  select(-c(band_depth, depth, count))
+                                                                                 by = c("chrom", "diag", "cell")) %>% mutate(BandNorm = ifelse(diag == 0,
+                                                                                 count, count/band_depth * depth)) %>% select(-c(band_depth, depth, count))
   if (save) {
     save_path = file.path(save_path, unique(names))
     for (i in 1:length(unique(names))) {
@@ -112,14 +112,14 @@ bandnorm = function(path = NULL, hic_df = NULL, save = TRUE, save_path = NULL) {
   return(hic_df)
 }
 
-#' Juicer .hic version of BandNorm
+#' Juicer hic version of BandNorm
 #'
 #' This function allows you to calculate the BandNorm normalization using the inputs that are Juicer .hic format, and the output won't be different from the original version.
 #' @param path The path for all the cells in a directory. There can be sub-directories.
 #' @param save Whether to save each normalized cells. Default is TRUE. Note that if don't have large memory on your computer, and you need to use create_embedding function, it is highly recommended to save the cells because it helps lower the cost of memory in this function.
 #' @param save_path Indicate the output path for normalized cells. Only need it when "save" parameter is TRUE. Default is NULL.
-#' @param resolution Specify the resolution from the hic file."
-#' @param pairs Specify the pairs of chromosomes to use, the format is a string like "1". If the input is "all", it will include all the intra-chromosomal bin pairs.
+#' @param resolution Specify the resolution from the hic file.
+#' @param pairs Specify the pairs of chromosomes to use, the format is like "1_1" or "chr1_chr1". If the input is "all_all", it will include all the intra-chromosomal bin pairs.
 #' @export
 #' @import data.table
 #' @import dplyr
@@ -138,29 +138,24 @@ bandnorm_juicer = function(path = NULL, resolution, pairs, save = TRUE, save_pat
       dir.create(save_path, recursive = TRUE)
     }
   }
+  if (all(pairs == "all_all")){
+    pairs = paste(readJuicerInformation(remoteFilePath)$chromosomeSizes$chromosome,
+                  readJuicerInformation(remoteFilePath)$chromosomeSizes$chromosome, sep = "_")
+  }
   # Get path and name for all the cells in this path.
   if (!dir.exists(path)){
     stop("path for data doesn't exist!")
   }
   paths = list.files(path, recursive = TRUE, full.names = TRUE)
-  if (pairs == "all"){
-    chroms = strawr::readHicChroms(paths[1])$name
-    pairs = chroms[!chroms %in% c("ALL", "M")]
-  }
   names = basename(list.files(path, recursive = TRUE))
   names = gsub(".hic", ".txt", names)
   load_cell = function(i) {
-    cell = list()
-    cell$contact = list()
-    for (i in 1:length(pairs)){
-      cell$contact[[pairs[i]]] =  as.matrix(strawr::straw("NONE", paths[i], 
-                                          pairs[i], pairs[i], unit = "BP", resolution))
-      colnames(cell$contact[[pairs[i]]]) = c("x", "y", "counts")
-    }
+    cell = readJuicer(file = paths[i], pairs = pairs, unit = "BP", resolution = resolution)
+    chr = strsplit(pairs, split = "_")
     clean_cell = function(k) {
       temp = as.data.frame(cell$contact[[pairs[k]]])
       n = nrow(cell$contact[[pairs[k]]])
-      temp$chromA = rep(paste("chr", pairs[k], sep = ""), n)
+      temp$chromA = rep(paste("chr", chr[[k]][1], sep = ""), n)
       return(temp %>% select(chromA, x, y, counts) %>% rename(chrom = chromA, binA = x, binB = y, count = counts))
     }
     return(rbindlist(lapply(1:length(chr), clean_cell)) %>%
@@ -172,8 +167,8 @@ bandnorm_juicer = function(path = NULL, resolution, pairs, save = TRUE, save_pat
   alpha_j <- band_info %>% group_by(chrom, diag) %>% summarise(depth = mean(band_depth))
 
   hic_df <- hic_df %>% left_join(alpha_j, by = c("chrom", "diag")) %>% left_join(band_info,
-                                                                                 by = c("chrom", "diag", "cell")) %>% mutate(BandNorm = count/band_depth * depth) %>%
-  select(-c(band_depth, depth, count))
+                                                                                 by = c("chrom", "diag", "cell")) %>% mutate(BandNorm = ifelse(diag == 0,
+                                                                                 count, count/band_depth * depth)) %>% select(-c(band_depth, depth, count))
   if (save) {
     save_path = file.path(save_path, unique(names))
     for (i in 1:length(unique(names))) {
@@ -195,7 +190,6 @@ bandnorm_juicer = function(path = NULL, resolution, pairs, save = TRUE, save_pat
 #' @param dim_pca Dimension of PCA embedding to be outputted. Default is 50.
 #' @param do_harmony Whether to use Harmony to remove the batch effect from the embedding. Default is FALSE
 #' @param batch The batch information used for Harmony to remove the batch effect. Required if do_harmony is TRUE.
-#' @param band_select Choose how faraway the band you need. Default is "all", and it can range from 1 to the number of bins times the resolution.
 #' @export
 #' @import data.table
 #' @import dplyr
@@ -206,7 +200,7 @@ bandnorm_juicer = function(path = NULL, resolution, pairs, save = TRUE, save_pat
 #' bandnorm_result = bandnorm(hic_df = hic_df, save = FALSE)
 #' embedding = create_embedding(hic_df = bandnorm_result, do_harmony = TRUE, batch = batch)
 create_embedding = function(path = NULL, hic_df = NULL, mean_thres = 0, var_thres = 0,
-                            dim_pca = 50, do_harmony = FALSE, batch = NULL, band_select = "all") {
+                            dim_pca = 50, do_harmony = FALSE, batch = NULL) {
   # Function to create embedding for cells, after combining all the bin-pairs from all chromosomes,
   # we do PCA first, and this function returns the PCA embedding.
   # There are two options:
@@ -243,18 +237,10 @@ create_embedding = function(path = NULL, hic_df = NULL, mean_thres = 0, var_thre
     summarized_hic = hic_df[, .(agg_m = mean(BandNorm), agg_v = var(BandNorm)),
                             by = .(chrom, binA, binB)]
     summarized_hic[is.na(agg_v), "agg_v"] = 0
-    if (band_select == "all"){
-      summarized_hic = summarized_hic %>%
-        filter(binA - binB != 0, agg_m > quantile(agg_m, mean_thres),
-               agg_v >= quantile(agg_v, var_thres)) %>% select(chrom, binA, binB)
-    }else {
-      summarized_hic = summarized_hic %>%
-        filter(binA - binB != 0, abs(binA - binB) <= band_select, agg_m > quantile(agg_m, mean_thres),
-               agg_v > quantile(agg_v, var_thres)) %>% select(chrom, binA, binB)
-    }
+    summarized_hic = summarized_hic %>% filter(binA - binB != 0, agg_m >= quantile(agg_m,
+                     mean_thres), agg_v >= quantile(agg_v, var_thres)) %>% select(chrom, binA, binB)
     cell_names = unique(hic_df$cell)
     input_mat = matrix(0, nrow = length(cell_names), ncol = nrow(summarized_hic))
-    print(paste("The number of features is", nrow(summarized_hic)))
     for (i in 1:length(cell_names)) {
       output_cell = summarized_hic
       output_cell$BandNorm = 0
@@ -295,17 +281,9 @@ create_embedding = function(path = NULL, hic_df = NULL, mean_thres = 0, var_thre
     }
     summarized_hic = summarized_hic %>% mutate(agg_v = (BandNorm_s - BandNorm^2/length(paths))/(length(paths) - 1)) %>%
       rename(agg_m = BandNorm)
-    if (band_select == "all"){
-      summarized_hic = summarized_hic %>%
-        filter(diag > 0, agg_m >= quantile(agg_m, mean_thres),
-               agg_v >= quantile(agg_v, var_thres)) %>% select(chrom, binA, binB)
-    }else {
-      summarized_hic = summarized_hic %>%
-        filter(diag > 0, diag <= band_select, agg_m > quantile(agg_m, mean_thres),
-               agg_v > quantile(agg_v, var_thres)) %>% select(chrom, binA, binB)
-    }
-    input_mat = matrix(0, nrow = length(cell_names), ncol = nrow(summarized_hic))
-    print(paste("The number of features is", nrow(summarized_hic)))
+    summarized_hic = summarized_hic %>% filter(diag > 0, agg_m >= quantile(agg_m, mean_thres), agg_v >= quantile(agg_v, var_thres)) %>%
+      select(chrom, binA, binB)
+    input_mat = matrix(0, nrow = length(names), ncol = nrow(summarized_hic))
     for (i in 1:length(paths)) {
       output_cell = summarized_hic
       output_cell$BandNorm = 0
@@ -318,13 +296,13 @@ create_embedding = function(path = NULL, hic_df = NULL, mean_thres = 0, var_thre
       input_mat[i, ] = output_cell$BandNorm
     }
   }
-  pca_mat = fast.prcomp(input_mat)$x[, 1:dim_pca]
+  pca_mat = prcomp(input_mat)$x[, 1:dim_pca]
   # Whether to use Harmony to clean the PCA embedding.
   if (do_harmony) {
     colnames(batch) = c("cell_name", "batch")
     batch = data.frame(batch)
     batch = batch[match(batch$cell_name, cell_names), ]$batch
-    pca_mat <- harmony::HarmonyMatrix(pca_mat, batch, "dataset", do_pca = FALSE)
+    pca_mat <- HarmonyMatrix(pca_mat, batch, "dataset", do_pca = FALSE)
     pca_mat = (pca_mat)[, 1:dim_pca]
   }
   rownames(pca_mat) = cell_names
@@ -398,3 +376,35 @@ plot_embedding = function(embedding, type = "UMAP", cell_info = NULL, label = NU
   }
 }
 
+#' Cooler hic version of BandNorm
+#'
+#' This function allows you to calculate the BandNorm normalization using the inputs that are cooler .cool/.mcool format
+#' @examples
+#' library(furrr)
+#' plan(multisession, workers = 20)
+#' totalCellList <- future_map(paste0("mcools/",dir("mcools")),cooler2bandnorm,1000000)
+#' totalDF <- bind_rows(totalCellList)
+
+
+bandnorm_cooler <- function(coolerPath,resolution,cellname = NULL){
+    if(length(cellname)==0){
+        cellname = str_split(coolerPath,"/")[[1]] %>% tail(n=1) %>% str_remove(".mcool")
+    }
+    if(str_split(coolerPath,fixed("."))[[1]] %>% tail(n=1) == "mcool"){
+        dump <- rhdf5::h5dump(coolerPath)
+        dump <- dump$resolutions[[which(names(dump$resolutions) ==format(resolution, scientific = FALSE))]]
+    }
+    
+    ids <- data.frame(chr = dump$bins$chrom, start = dump$bins$start, end = dump$bins$end, id = seq(1, length(dump$bins$chrom), by = 1)-1)
+    mat <- data.frame(bin1 = dump$pixels$bin1_id, bin2 = dump$pixels$bin2_id, IF = dump$pixels$count)
+    colnames(mat) <- c('i', 'j', 'IF')
+    colnames(ids) <- c('chr1', 'start1', 'end1', 'id')
+
+    new_mat <- left_join(mat, ids, by = c('i' = 'id'))
+    colnames(ids) <- c('chr2', 'start2', 'end2', 'id')
+    new_mat <- left_join(new_mat, ids, by = c('j' = 'id'))
+    new_mat <- new_mat %>% filter(chr1==chr2)
+    new_mat <- new_mat %>% mutate(diag = (j-i)*resolution) %>% select(4,5,8,3,diag) %>% mutate(cellname=cellname)
+    names(new_mat) <- c("chrom","binA","binB","count","diag","cell")
+    return(new_mat)
+}
