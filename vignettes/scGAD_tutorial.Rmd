@@ -145,7 +145,6 @@ library(ggplot2)
 library(viridis)
 library(dplyr)
 library(gridExtra)
-library(ggpubr)
 library(Seurat)
 
 DataList = list(scGAD = gad_score, scRNAseq = RNA)
@@ -157,13 +156,12 @@ combinedAssay = runProjection(DataList, doNorm = c(FALSE, FALSE), cellTypeList)
 
 p_celltype = DimPlot(combinedAssay, reduction = "umap", label = TRUE, repel = TRUE, 
                     pt.size = 1.3, shape.by = "method", label.size = 6) +
-    xlab("UMAP 1") +
+    xlab("UMAP 1") + theme_bw() + 
     ylab("UMAP 2") +
     scale_color_manual(
         breaks = c("Hippocampal Granule Cell", "Mature Oligodendrocyte", "Microglia Etc."),
         values = c("#1B4F72", "#F39C12", "#000000")
-    ) +
-    rremove("legend")
+    ) + theme(legend.position = "none")
 
 
 pRNA = combinedAssay@reductions$umap@cell.embeddings %>% 
@@ -172,16 +170,15 @@ pRNA = combinedAssay@reductions$umap@cell.embeddings %>%
     filter(label == "scRNA-seq") %>%
     ggplot(aes(x = UMAP_1, y = UMAP_2, color = celltype)) +
         geom_point(size = 0.3) +
-        theme_pubr(base_size = 14) +
+        theme_bw(base_size = 14) +
         scale_color_manual(
             breaks = c("Hippocampal Granule Cell", "Mature Oligodendrocyte", "Microglia Etc."),
             values = c("#1B4F72", "#F39C12", "#000000")
         ) +
         xlab("UMAP 1") +
         ylab("UMAP 2") +
-        rremove("legend") +
-        ggtitle("Single-cell Transcriptomics") + 
-        theme(axis.title = element_blank())
+        theme(legend.position = "none", axis.title = element_blank()) + 
+        ggtitle("Single-cell Transcriptomics")
 
 
 pGAD = combinedAssay@reductions$umap@cell.embeddings %>% 
@@ -190,16 +187,15 @@ pGAD = combinedAssay@reductions$umap@cell.embeddings %>%
     filter(label == "scGAD") %>%
     ggplot(aes(x = UMAP_1, y = UMAP_2, color = celltype)) +
     geom_point(size = 0.3) +
-    theme_pubr(base_size = 14) +
+    theme_bw(base_size = 14) +
     scale_color_manual(
         breaks = c("Hippocampal Granule Cell", "Mature Oligodendrocyte", "Microglia Etc."),
         values = c("#1B4F72", "#F39C12", "#000000")
     ) +
     xlab("UMAP 1") +
     ylab("UMAP 2") +
-    rremove("legend") +
-    ggtitle("Single-cell 3D Genomics") +
-    theme(axis.title = element_blank())
+    theme(legend.position = "none", axis.title = element_blank()) + 
+    ggtitle("Single-cell 3D Genomics")
 
 
 lay = rbind(c(1, 1, 2))
