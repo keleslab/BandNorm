@@ -119,7 +119,7 @@ bandnorm = function(path = NULL, hic_df = NULL, save = TRUE, save_path = NULL) {
 #' @param save Whether to save each normalized cells. Default is TRUE. Note that if don't have large memory on your computer, and you need to use create_embedding function, it is highly recommended to save the cells because it helps lower the cost of memory in this function.
 #' @param save_path Indicate the output path for normalized cells. Only need it when "save" parameter is TRUE. Default is NULL.
 #' @param resolution Specify the resolution from the hic file."
-#' @param chroms Specify the chromosomes to use, the format is a string like "1". If the input is "all", it will include all the intra-chromosomal bin pairs.
+#' @param chroms Specify the chromosomes to use, the format is a string like "1". If the input is "all", it will include all the intra-chromosomal bin pairs. This does not allow inputting chrM and chrY currently.
 #' @export
 #' @import data.table
 #' @import dplyr
@@ -145,7 +145,7 @@ bandnorm_juicer = function(path = NULL, resolution, chroms, save = TRUE, save_pa
   paths = list.files(path, recursive = TRUE, full.names = TRUE)
   if (chroms == "all"){
     chroms = strawr::readHicChroms(paths[1])$name
-    chroms = chroms[!chroms %in% "ALL"]
+    chroms = chroms[!chroms %in% c("ALL", "M", "Y")]
   }
   chroms = as.character(chroms)
   names = basename(list.files(path, recursive = TRUE))
