@@ -324,7 +324,7 @@ create_embedding = function(path = NULL, hic_df = NULL, mean_thres = 0, var_thre
   if (do_harmony) {
     colnames(batch) = c("cell_name", "batch")
     batch = data.frame(batch)
-    batch = batch[match(batch$cell_name, cell_names), ]$batch
+    batch = batch[match(cell_names, batch$cell_name), ]$batch
     pca_mat <- harmony::HarmonyMatrix(pca_mat, batch, "dataset", do_pca = FALSE)
     pca_mat = (pca_mat)[, 1:dim_pca]
   }
