@@ -219,12 +219,6 @@ create_embedding = function(path = NULL, hic_df = NULL, chrs = paste0("chr", c(1
   if (!is.null(path) && !is.null(hic_df)){
     warning("Specified both path and hic_df. Will use hic_df file as default.")
   }
-  if (mean_thres < 0 || mean_thres > 1){
-    stop("The threshold for mean should be between 0 and 1.")
-  }
-  if (var_thres < 0 || var_thres > 1){
-    stop("The threshold for variance should be between 0 and 1.")
-  }
   if (is.null(path)) {
     n = length(unique(hic_df$cell))
     if (dim_pca > n){
