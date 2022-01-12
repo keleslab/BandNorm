@@ -306,7 +306,7 @@ create_embedding = function(path = NULL, hic_df = NULL, chrs = paste0("chr", c(1
     pca_mat <- harmony::HarmonyMatrix(pca_mat, batch, "dataset", do_pca = FALSE)
     pca_mat = (pca_mat)[, 1:dim_pca]
   }
-  rownames(pca_mat) = cell_names
+  rownames(pca_mat) = names
   return(pca_mat)
 }
 
