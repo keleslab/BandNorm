@@ -191,12 +191,10 @@ bandnorm_juicer = function(path = NULL, resolution, chroms, save = TRUE, save_pa
 #' This function allows you to obtain the PCA embedding for tSNE or UMAP plotting.
 #' @param path The path for all the normalized cells in a directory. There can be sub-directories. Using path means loading the bandnorm normalized data iteratively from the directory, so it is relatively slower than using hic_df. However, it won't eat up your memory too much, and the speed is acceptable.
 #' @param hic_df After using bandnorm, if you keep the data frame, it is possible to use this instead of "path" as input of create_embedding. If using hic_df, the speed will be faster, but is costs more memory.
-#' @param mean_thres The proportion of low mean interactions to be filtered. Ranges from 0 to 1, default is 0.
-#' @param var_thres The proportion of low variance interactions to be filtered. Ranges from 0 to 1, default is 0.
+#' @param chrs Chromosomes used in the embedding. Default is chr1, ..., chr19, and chrX.
 #' @param dim_pca Dimension of PCA embedding to be outputted. Default is 50.
 #' @param do_harmony Whether to use Harmony to remove the batch effect from the embedding. Default is FALSE
 #' @param batch The batch information used for Harmony to remove the batch effect. Required if do_harmony is TRUE.
-#' @param band_select Choose how faraway the band you need. Default is "all", and it can range from 1 to the number of bins times the resolution.
 #' @export
 #' @import data.table
 #' @import dplyr
@@ -206,8 +204,8 @@ bandnorm_juicer = function(path = NULL, resolution, chroms, save = TRUE, save_pa
 #' data("batch")
 #' bandnorm_result = bandnorm(hic_df = hic_df, save = FALSE)
 #' embedding = create_embedding(hic_df = bandnorm_result, do_harmony = TRUE, batch = batch)
-create_embedding = function(path = NULL, hic_df = NULL, mean_thres = 0, var_thres = 0,
-                            dim_pca = 50, do_harmony = FALSE, batch = NULL, band_select = "all") {
+create_embedding = function(path = NULL, hic_df = NULL, chrs = paste0("chr", c(1:19, "X")),
+                            dim_pca = 50, do_harmony = FALSE, batch = NULL) {
   # Function to create embedding for cells, after combining all the bin-pairs from all chromosomes,
   # we do PCA first, and this function returns the PCA embedding.
   # There are two options:
@@ -240,34 +238,22 @@ create_embedding = function(path = NULL, hic_df = NULL, mean_thres = 0, var_thre
         stop("The batch file should only contain two columns, the first is cell names and the second is batch information.")
       }
     }
-    setDT(hic_df)
-    summarized_hic = hic_df[, .(agg_m = mean(BandNorm), agg_v = var(BandNorm)),
-                            by = .(chrom, binA, binB)]
-    summarized_hic[is.na(agg_v), "agg_v"] = 0
-    if (band_select == "all"){
-      summarized_hic = summarized_hic %>%
-        filter(binA - binB != 0, agg_m > quantile(agg_m, mean_thres),
-               agg_v >= quantile(agg_v, var_thres)) %>% select(chrom, binA, binB)
-    }else {
-      summarized_hic = summarized_hic %>%
-        filter(binA - binB != 0, abs(binA - binB) <= band_select, agg_m > quantile(agg_m, mean_thres),
-               agg_v > quantile(agg_v, var_thres)) %>% select(chrom, binA, binB)
-    }
-    cell_names = unique(hic_df$cell)
-    input_mat = matrix(0, nrow = length(cell_names), ncol = nrow(summarized_hic))
-    print(paste("The number of features is", nrow(summarized_hic)))
-    for (i in 1:length(cell_names)) {
-      output_cell = summarized_hic
-      output_cell$BandNorm = 0
-      temp = hic_df[cell == cell_names[i], ]
-      temp = temp %>% filter(diag > 0, chrom %in% summarized_hic$chrom,
-                             binA %in% summarized_hic$binA,
-                             binB %in% summarized_hic$binB)
-      setDT(output_cell)
-      setDT(temp)
-      output_cell = output_cell[temp, `:=`(BandNorm, i.BandNorm), on = .(chrom,
-                                                                         binA, binB)]
-      input_mat[i, ] = output_cell$BandNorm
+    hic_df = hic_df[diag != 0]
+    names = unique(hic_df$cell)
+    n = length(names)
+    hic_df$cell = as.numeric(factor(hic_df$cell, level = names))
+    hic_df = hic_df %>% 
+      mutate(featureIndex = paste(binA, binB, sep = "_")) %>%
+      select(-c(binA, binB, diag))
+    output = list()
+    for (c in 1:24) {
+      hic_dfCHR = hic_df[chrom == chrs[c], ]
+      hic_dfCHR$featureIndex = as.numeric(factor(hic_dfCHR$featureIndex))
+      hic_dfCHR = sparseMatrix(i = hic_dfCHR$cell, j = hic_dfCHR$featureIndex, x = hic_dfCHR$BandNorm, 
+                               dims = c(max(hic_dfCHR$cell), max(hic_dfCHR$featureIndex)),
+                               index1 = TRUE)
+      rownames(hic_dfCHR) = names
+      output[[chrs[c]]] = hic_dfCHR
     }
   } else {
     paths = list.files(path, recursive = TRUE, full.names = TRUE)
@@ -286,40 +272,38 @@ create_embedding = function(path = NULL, hic_df = NULL, mean_thres = 0, var_thre
     }
     cell_names = names
     load_cell = function(i) {
-      return(fread(paths[i]) %>% rename(chrom = V1, binA = V2, binB = V4, BandNorm = V5) %>%
-               mutate(diag = abs(binB - binA), BandNorm_s = BandNorm^2) %>% select(-V3))
+      return(fread(paths[i], select = c(1, 2, 4, 5))[V2 - V4 != 0 & V1 == chrs[c]] %>% 
+               mutate(cellIndex = i, featureIndex = paste(V2, V4, sep = "_")) %>%
+               select(-c(V1, V2, V4)))
     }
-    summarized_hic = c()
-    for (i in 1:length(path)) {
-      summarized_hic = bind_rows(summarized_hic, load_cell(i)) %>% group_by(chrom,
-                                                                            binA, binB, diag) %>% summarise_all(sum)
-    }
-    summarized_hic = summarized_hic %>% mutate(agg_v = (BandNorm_s - BandNorm^2/length(paths))/(length(paths) - 1)) %>%
-      rename(agg_m = BandNorm)
-    if (band_select == "all"){
-      summarized_hic = summarized_hic %>%
-        filter(diag > 0, agg_m >= quantile(agg_m, mean_thres),
-               agg_v >= quantile(agg_v, var_thres)) %>% select(chrom, binA, binB)
-    }else {
-      summarized_hic = summarized_hic %>%
-        filter(diag > 0, diag <= band_select, agg_m > quantile(agg_m, mean_thres),
-               agg_v > quantile(agg_v, var_thres)) %>% select(chrom, binA, binB)
-    }
-    input_mat = matrix(0, nrow = length(cell_names), ncol = nrow(summarized_hic))
-    print(paste("The number of features is", nrow(summarized_hic)))
-    for (i in 1:length(paths)) {
-      output_cell = summarized_hic
-      output_cell$BandNorm = 0
-      temp = load_cell(i) %>% filter(diag > 0, chrom %in% summarized_hic$chrom,
-                                     binA %in% summarized_hic$binA, binB %in% summarized_hic$binB)
-      setDT(output_cell)
-      setDT(temp)
-      output_cell = output_cell[temp, `:=`(BandNorm, i.BandNorm), on = .(chrom,
-                                                                         binA, binB)]
-      input_mat[i, ] = output_cell$BandNorm
+    output = list()
+    for (c in 1:24) {
+      hic_df = rbindlist(lapply(1:length(paths), load_cell))
+      hic_df$featureIndex = as.numeric(as.factor(hic_df$featureIndex))
+      hic_df = sparseMatrix(i = hic_df$cellIndex, j = hic_df$featureIndex, x = hic_df$V5, 
+                            dims = c(max(hic_df$cellIndex), max(hic_df$featureIndex)),
+                            index1 = TRUE)
+      rownames(hic_df) = names
+      output[[chrs[c]]] = hic_df
     }
   }
-  pca_mat = fast.prcomp(input_mat)$x[, 1:dim_pca]
+  if (dim(output[["chr1"]])[2] < 50000){
+    SVDInput = c()
+    for (i in 1:length(output)){
+      SVDInput = cbind(SVDInput, output[[i]])
+    }
+    pca_mat = sparsesvd(SVDInput, dim_pca)
+    pca_mat = pca_mat$u %*% diag(pca_mat$d)
+  } else {
+    pca_mat = c()
+    for (i in 1:length(output)){
+      SVDInput = sparsesvd(output[[i]], dim_pca)
+      SVDInput = SVDInput$u %*% diag(SVDInput$d)
+      pca_mat = cbind(pca_mat, SVDInput)
+    }
+    pca_mat = sparsesvd(pca_mat, dim_pca)
+    pca_mat = pca_mat$u %*% diag(pca_mat$d)
+  }
   # Whether to use Harmony to clean the PCA embedding.
   if (do_harmony) {
     colnames(batch) = c("cell_name", "batch")

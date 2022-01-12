@@ -31,7 +31,8 @@ Depends:
     Seurat,
     strawr,
     rmarkdown,
-    viridis
+    viridis,
+    sparsesvd
 RoxygenNote: 7.1.1
 Suggests: 
     knitr,
