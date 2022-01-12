@@ -240,7 +240,7 @@ create_embedding = function(path = NULL, hic_df = NULL, chrs = paste0("chr", c(1
       mutate(featureIndex = paste(binA, binB, sep = "_")) %>%
       select(-c(binA, binB, diag))
     output = list()
-    for (c in 1:24) {
+    for (c in 1:length(chrs)) {
       hic_dfCHR = hic_df[chrom == chrs[c], ]
       hic_dfCHR$featureIndex = as.numeric(factor(hic_dfCHR$featureIndex))
       hic_dfCHR = sparseMatrix(i = hic_dfCHR$cell, j = hic_dfCHR$featureIndex, x = hic_dfCHR$BandNorm, 
@@ -271,7 +271,7 @@ create_embedding = function(path = NULL, hic_df = NULL, chrs = paste0("chr", c(1
                select(-c(V1, V2, V4)))
     }
     output = list()
-    for (c in 1:24) {
+    for (c in 1:length(chrs)) {
       hic_df = rbindlist(lapply(1:length(paths), load_cell))
       hic_df$featureIndex = as.numeric(as.factor(hic_df$featureIndex))
       hic_df = sparseMatrix(i = hic_df$cellIndex, j = hic_df$featureIndex, x = hic_df$V5, 
