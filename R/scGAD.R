@@ -26,23 +26,17 @@ scGAD = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 4,
       cell = fread(paths[k], select = c(1, 2, 4, 5))
       colnames(cell) = c("V1", "V2", "V4", "v5")
       cell = cell[abs(V4 - V2) <= discardCounts]
-      setkey(cell, V1)
-      
-      gad_score = rep(NA, nrow(genes))
-      idx = list()
-      pchr = chr[1]
-      temp = cell[J(pchr)]
-      for (i in 1:nrow(genes)){
-        cchr = chr[i]
-        if (cchr != pchr) {
-          temp = cell[J(cchr)]
+      cell = split(cell, by = "V1", keep.by = FALSE)
+      calGAD = function(i){
+        if (is.null(cell[[chr[i]]])){
+          return(0)
+        }else{
+          return(sum2(.subset2(cell[[chr[i]]], 4)[between(cell[[chr[i]]]$V2, s1_low[i], s2[i]) & 
+                                                    between(cell[[chr[i]]]$V4, s1_low[i], s2[i])]))
         }
-        
-        gad_score[i] = sum2(.subset2(temp, 4)[temp$V2 %between% c(s1_low[i], s2[i]) &
-                                                temp$V4 %between% c(s1_low[i], s2[i])])
-        pchr = chr[i]
       }
-      gad_score
+      calGADVec = Vectorize(calGAD)
+      Vectorize(calGAD)
     }
   } else{
     cl <- makeCluster(cores[1])
@@ -51,24 +45,19 @@ scGAD = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 4,
     names = unique(hic_df$cell)
     output = foreach(k=1:length(names), .packages=c("dplyr", "data.table", "matrixStats"), .combine = 'cbind') %dopar% {
       setkey(hic_df, cell)
-      tempcell = hic_df[J(names[k])]
-      tempcell = tempcell[abs(binA - binB) <= discardCounts]
-      setkey(tempcell, chrom)
-      gad_score = rep(NA, nrow(genes))
-      idx = list()
-      pchr = chr[1]
-      temp = tempcell[J(pchr)]
-      for (i in 1:nrow(genes)){
-        cchr = chr[i]
-        if (cchr != pchr) {
-          temp = tempcell[J(cchr)]
+      cell = hic_df[J(names[k])]
+      cell = cell[abs(binA - binB) <= discardCounts]
+      cell = split(cell, by = "V1", keep.by = FALSE)
+      calGAD = function(i){
+        if (is.null(cell[[chr[i]]])){
+          return(0)
+        }else{
+          return(sum2(.subset2(cell[[chr[i]]], 4)[between(cell[[chr[i]]]$V2, s1_low[i], s2[i]) & 
+                                                    between(cell[[chr[i]]]$V4, s1_low[i], s2[i])]))
         }
-        
-        gad_score[i] = sum2(.subset2(temp, 5)[temp$binA %between% c(s1_low[i], s2[i]) &
-                                                temp$binB %between% c(s1_low[i], s2[i])])
-        pchr = chr[i]
       }
-      gad_score
+      calGADVec = Vectorize(calGAD)
+      Vectorize(calGAD)
     }
   }
   
