@@ -31,12 +31,12 @@ scGAD = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 4,
         if (is.null(cell[[chr[i]]])){
           return(0)
         }else{
-          return(sum2(.subset2(cell[[chr[i]]], 4)[between(cell[[chr[i]]]$V2, s1_low[i], s2[i]) & 
+          return(sum2(.subset2(cell[[chr[i]]], 3)[between(cell[[chr[i]]]$V2, s1_low[i], s2[i]) & 
                                                     between(cell[[chr[i]]]$V4, s1_low[i], s2[i])]))
         }
       }
       calGADVec = Vectorize(calGAD)
-      Vectorize(calGAD)
+      calGADVec(1:nrow(genes))
     }
   } else{
     cl <- makeCluster(cores[1])
@@ -52,12 +52,12 @@ scGAD = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 4,
         if (is.null(cell[[chr[i]]])){
           return(0)
         }else{
-          return(sum2(.subset2(cell[[chr[i]]], 4)[between(cell[[chr[i]]]$V2, s1_low[i], s2[i]) & 
+          return(sum2(.subset2(cell[[chr[i]]], 3)[between(cell[[chr[i]]]$V2, s1_low[i], s2[i]) & 
                                                     between(cell[[chr[i]]]$V4, s1_low[i], s2[i])]))
         }
       }
       calGADVec = Vectorize(calGAD)
-      Vectorize(calGAD)
+      calGADVec(1:nrow(genes))
     }
   }
   
