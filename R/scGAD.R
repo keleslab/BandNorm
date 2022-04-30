@@ -7,60 +7,126 @@
 #' @param cores Number of cores used for parallel running. Default is 4.
 #' @param threads Number of threads for fread function, default is 8.
 #' @param depthNorm Whether to normalize the sequencing depth effect. Default is TRUE.
+#' @param binPair Use bin pair or valid reads. The former is faster since it is already binned, but the latter will be more accurate. Default is TRUE.
+#' @param res The resolution of the data. Used only when binPair = TRUE. Default is 10000.
+#' @param format The format of the valid pairs. "short", "medium", "long", "4DN" are supported. See https://github.com/aidenlab/juicer/wiki/Pre.
 #' @export
 #' @examples
 #' #
 
-scGAD = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 4, threads = 8){
+scGADNew = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 4, threads = 8, binPair = TRUE, format = "short", res = 10000){
   setDTthreads(threads)
   discardCounts = max(genes$s2 - genes$s1)
-  chr = genes$chr
-  s1_low <- ifelse(genes$strand == "+", genes$s1 - 1000, genes$s1)
-  s2 <- ifelse(genes$strand == "-", genes$s2, genes$s2 + 1000)
+  genes$s1 <- ifelse(genes$strand == "+", genes$s1 - 1000, genes$s1)
+  genes$s2 <- ifelse(genes$strand == "-", genes$s2, genes$s2 + 1000)
+  colnames(genes) = c("chr", "start", "end", "strand", "names")
+  genes = makeGRangesFromDataFrame(genes, keep.extra.columns=TRUE) 
+  cl <- makeCluster(cores)
+  clusterEvalQ(cl, {library(data.table)
+    library(GenomicInteractions)
+  })
   if (is.null(hic_df)){
-    cl <- makeCluster(cores[1])
-    registerDoParallel(cl)
-    names = list.files(path)
-    paths = list.files(path, full.names = TRUE)
-    output = foreach(k=1:length(names), .packages=c("dplyr", "data.table", "matrixStats"), .combine = 'cbind') %dopar% {
-      cell = fread(paths[k], select = c(1, 2, 4, 5))
-      colnames(cell) = c("V1", "V2", "V4", "v5")
-      cell = cell[abs(V4 - V2) <= discardCounts]
-      cell = split(cell, by = "V1", keep.by = FALSE)
-      calGAD = function(i){
-        if (is.null(cell[[chr[i]]])){
-          return(0)
-        }else{
-          return(sum2(.subset2(cell[[chr[i]]], 3)[between(cell[[chr[i]]]$V2, s1_low[i], s2[i]) & 
-                                                    between(cell[[chr[i]]]$V4, s1_low[i], s2[i])]))
-        }
+    if (binPair){
+      names = list.files(path)
+      paths = list.files(path, full.names = TRUE)
+      getCount = function(k){
+        cell = fread(paths[k], select = c(1, 2, 4, 5))
+        colnames(cell) = c("V1", "V2", "V4", "V5")
+        cell = cell[abs(V4 - V2) <= discardCounts]
+        GInt = GenomicInteractions(GRanges(cell$V1,
+                                           IRanges(cell$V2, width = res)), 
+                                   GRanges(cell$V1,
+                                           IRanges(cell$V4, width = res)), 
+                                   counts = cell$V5)
+        one <- overlapsAny(anchorOne(GInt), genes)
+        two <- overlapsAny(anchorTwo(GInt), genes)
+        x.valid <- GInt[one & two]
+        hits <- list()
+        hits$one <- findOverlaps(anchorOne(x.valid), genes, select = "first")
+        hits$two <- findOverlaps(anchorTwo(x.valid), genes, select = "first")
+        counts = data.table(reads = x.valid$counts[hits[[1]] == hits[[2]]], pos = hits$one[hits$one == hits$two])
+        tabulated <- unique(counts$pos)
+        counts <- setDT(counts)[,.(reads = sum(reads)), by = 'pos']$reads
+        dat = data.table(names = genes[unique(tabulated)]$names, counts = counts)
+        colnames(dat) = c("names", names[k])
+        dat
       }
-      calGADVec = Vectorize(calGAD)
-      calGADVec(1:nrow(genes))
+      output <- parLapply(cl, 1:length(names), getCount)
+      output = Reduce(full_join, output)
+      output[is.na(output)] = 0
+    }
+    else {
+      names = list.files(path)
+      paths = list.files(path, full.names = TRUE)
+      getCount = function(k){
+        cell = fread(paths[k])
+        if (format == "short"){
+          cell = cell[cell$V2 == cell$V6, ]
+          cell = cell[, c(2, 3, 7)]
+        }else if (format == "medium"){
+          cell = cell[cell$V3 == cell$V7, ]
+          cell = cell[, c(3, 4, 8)]
+        }else if (format == "long"){
+          cell = cell[cell$V2 == cell$V6, ]
+          cell = cell[, c(2, 3, 7)]
+        }else if (format == "4DN"){
+          cell = cell[cell$V2 == cell$V4, ]
+          cell = cell[, c(2, 3, 5)]
+        }
+        colnames(cell) = c("V1", "V2", "V4")
+        cell = cell[abs(V4 - V2) <= discardCounts]
+        GInt = GenomicInteractions(GRanges(cell$V1,
+                                           IRanges(cell$V2, width = res)), 
+                                   GRanges(cell$V1,
+                                           IRanges(cell$V4, width = res)), 
+                                   counts = 1)
+        one <- overlapsAny(anchorOne(GInt), genes)
+        two <- overlapsAny(anchorTwo(GInt), genes)
+        x.valid <- GInt[one & two]
+        hits <- list()
+        hits$one <- findOverlaps(anchorOne(x.valid), genes, select = "first")
+        hits$two <- findOverlaps(anchorTwo(x.valid), genes, select = "first")
+        counts = data.table(reads = x.valid$counts[hits[[1]] == hits[[2]]], pos = hits$one[hits$one == hits$two])
+        tabulated <- unique(counts$pos)
+        counts <- setDT(counts)[,.(reads = sum(reads)), by = 'pos']$reads
+        dat = data.table(names = genes[unique(tabulated)]$names, counts = counts)
+        colnames(dat) = c("names", names[k])
+        dat
+      }
+      output <- parLapply(cl, 1:length(names), getCount)
+      output = Reduce(full_join, output)
+      output[is.na(output)] = 0
     }
   } else{
-    cl <- makeCluster(cores[1])
-    registerDoParallel(cl)
     hic_df = setDT(hic_df)
     names = unique(hic_df$cell)
-    output = foreach(k=1:length(names), .packages=c("dplyr", "data.table", "matrixStats"), .combine = 'cbind') %dopar% {
+    getCount = function(k){
       setkey(hic_df, cell)
       cell = hic_df[J(names[k])]
       cell = cell[abs(binA - binB) <= discardCounts]
-      cell = split(cell, by = "V1", keep.by = FALSE)
-      calGAD = function(i){
-        if (is.null(cell[[chr[i]]])){
-          return(0)
-        }else{
-          return(sum2(.subset2(cell[[chr[i]]], 3)[between(cell[[chr[i]]]$V2, s1_low[i], s2[i]) & 
-                                                    between(cell[[chr[i]]]$V4, s1_low[i], s2[i])]))
-        }
-      }
-      calGADVec = Vectorize(calGAD)
-      calGADVec(1:nrow(genes))
+      GInt = GenomicInteractions(GRanges(cell$chrom,
+                                         IRanges(cell$binA, width = res)), 
+                                 GRanges(cell$chrom,
+                                         IRanges(cell$binB, width = res)), 
+                                 counts = cell$count)
+      one <- overlapsAny(anchorOne(GInt), genes)
+      two <- overlapsAny(anchorTwo(GInt), genes)
+      x.valid <- GInt[one & two]
+      hits <- list()
+      hits$one <- findOverlaps(anchorOne(x.valid), genes, select = "first")
+      hits$two <- findOverlaps(anchorTwo(x.valid), genes, select = "first")
+      counts = data.table(reads = x.valid$counts[hits[[1]] == hits[[2]]], pos = hits$one[hits$one == hits$two])
+      tabulated <- unique(counts$pos)
+      counts <- setDT(counts)[,.(reads = sum(reads)), by = 'pos']$reads
+      dat = data.table(names = genes[unique(tabulated)]$names, counts = counts)
+      colnames(dat) = c("names", names[k])
+      dat
     }
+    output <- parLapply(cl, 1:length(names), getCount)
+    output = Reduce(full_join, output)
+    output[is.na(output)] = 0
   }
-  
+  output
   colnames(output) = names
   rownames(output) = genes$gene_name
   output = output[rowSums(output) > 0, ]
