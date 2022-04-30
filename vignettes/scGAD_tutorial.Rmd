@@ -35,7 +35,7 @@ Please refer to the `BandNorm` R package installation section in [BandNorm tutor
 
 ### 1.1 Format of input scHi-C data
 
-scGAD function allows two types of formats for the input data. It can be **A.** the path to the scHi-c contact matrices files or **B.** a data.frame R object containing all the interactions from all the cells with cell name appended in each row.
+scGAD function allows two types of formats for the input data. It can be **A.** the path to the scHi-c contact matrices files, **B.** valid-pairs that are supported in Juicer, or **C.** a data.frame R object containing all the interactions from all the cells with cell name appended in each row.
 
 **A.** A path to the folder where the single-cell Hi-C contact matrices are saved. Under such directory, each file should be in the form of 5-columns bed file format, namely ```chrA, binA, chrB, binB, count```, showing the interactions for corresponding individual cell:
 
@@ -52,7 +52,9 @@ chr1    10000   chr1    40000 1
 chr1    20000   chr1    40000 2
 ```
 
-**B.** Another way is to provide a data.frame object, which includes all the interactions information plus the cell name where such interactions occur. The data frame should have 5 columns and take the exact column name as ```chrom, binA, binB, count, cell```. The column names in here should be exactly the same as stated, and the order of columns doesn't matter. Option B is not recommended for the large volume of single-cell Hi-C data sets, especially when it is implemented with limited computational resources like a laptop. However, it can be fast if it is run on servers or computers where sufficient memory is available to store such large data.frame object.
+**B.** Now, we support using valid-pairs instead of bin-pairs. Based on Juicer (https://github.com/aidenlab/juicer/wiki/Pre), we support "medium", "short", "long", and "4DN" format. It allows a more accurate result.
+
+**C.** Another way is to provide a data.frame object, which includes all the interactions information plus the cell name where such interactions occur. The data frame should have 5 columns and take the exact column name as ```chrom, binA, binB, count, cell```. The column names in here should be exactly the same as stated, and the order of columns doesn't matter. Option B is not recommended for the large volume of single-cell Hi-C data sets, especially when it is implemented with limited computational resources like a laptop. However, it can be fast if it is run on servers or computers where sufficient memory is available to store such large data.frame object.
 
 ```
 > head(scgad_df, 10)
@@ -149,8 +151,8 @@ library(gridExtra)
 library(Seurat)
 
 DataList = list(scGAD = gad_score, scRNAseq = RNA)
-cellTypeList = list(scGAD = summary$`cell-type cluster`, scRNAseq = cellTypeRNA)
-names(cellTypeList[[1]]) = summary$cell
+cellTypeList = list(scGAD = summary$`cell-type cluster`[summary$cell %in% colnames(gad_score)], scRNAseq = cellTypeRNA)
+names(cellTypeList[[1]]) = summary$cell[summary$cell %in% colnames(gad_score)]
 names(cellTypeList[[2]]) = colnames(RNA)
 
 combinedAssay = runProjection(DataList, doNorm = c(FALSE, FALSE), cellTypeList)

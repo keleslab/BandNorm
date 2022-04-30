@@ -1,7 +1,7 @@
 Package: BandNorm
 Type: Package
 Title: BandNorm Method for single-cell Hi-C
-Version: 0.0.2
+Version: 0.1.0
 Author:
     Ye Zheng <yezheng.stat@gmail.com> 
     Siqi Shen <sshen82@wisc.edu>
@@ -26,21 +26,24 @@ Depends:
     Matrix,
     gmodels,
     parallel,
-    GenomicInteractions,
-    foreach,
     matrixStats,
     Seurat,
     strawr,
     rmarkdown,
     viridis,
-    sparsesvd
-RoxygenNote: 7.1.1
+    sparsesvd,
+    GenomicInteractions,
+    GenomicRanges
+RoxygenNote: 7.1.2
 Suggests: 
     knitr,
     rmarkdown,
     markdown
 VignetteBuilder: knitr
+biocViews: 
 Imports: 
-    harmony
+    harmony,
+    GenomicInteractions,
+    GenomicRanges
 Remotes: 
     immunogenomics/harmony

@@ -90,7 +90,7 @@ print(cell_type[1:10, ])
 You can also use `download_schic` function to download real data. The available data includes [Kim2020](https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1008173), [Li2019](https://www.nature.com/articles/s41592-019-0502-z), [Ramani2017](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5330809/), and [Lee2019](https://www.nature.com/articles/s41592-019-0547-z). You can specify one of the cell-types in those cell lines. There are also summary files available for them, and the summary includes batch, cell-type, depth and sparsity information. You can go to [this website](http://pages.stat.wisc.edu/~sshen82/bandnorm/) for more information. We won't run it here since it will mess up your computer.
 
 ```{r download_data, eval = FALSE}
-download_schic("Li2019", cell_type = "2i", cell_path = getwd(), summary_path = getwd())
+# download_schic("Li2019", cell_type = "2i", cell_path = getwd(), summary_path = getwd())
 ```
 
 ## Use BandNorm
@@ -106,7 +106,7 @@ bandnorm_result[1:10, ]
 Then, you can use `create_embedding` function to obtain a PCA embedding for the data. You can choose to use Harmony to remove the batch effect.
 
 ```{r embedding}
-embedding = create_embedding(hic_df = bandnorm_result, do_harmony = TRUE, batch = batch)
+embedding = create_embedding(hic_df = bandnorm_result, do_harmony = TRUE, batch = batch, chrs = "chr1")
 embedding[1:10, ]
 ```
 

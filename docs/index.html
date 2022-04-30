@@ -28,6 +28,8 @@
 </script>
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-home">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -40,23 +42,17 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">BandNorm</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.2</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.0</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
 <li>
-  <a href="index.html">
-    <span class="fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
-<li>
   <a href="reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
     Articles
      
     <span class="caret"></span>
@@ -83,76 +79,89 @@
 
       </header><div class="row">
   <div class="contents col-md-9">
-<div id="bandnorm-and-scgad" class="section level1">
-<div class="page-header"><h1 class="hasAnchor">
-<a href="#bandnorm-and-scgad" class="anchor"></a>BandNorm and scGAD</h1></div>
+<div class="section level1">
+<div class="page-header"><h1 id="bandnorm-and-scgad">BandNorm and scGAD<a class="anchor" aria-label="anchor" href="#bandnorm-and-scgad"></a>
+</h1></div>
 <p>Ye Zheng*, Siqi Shen* and Sündüz Keleş. Normalization and De-noising of single-cell Hi-C Data with BandNorm and 3DVI. bioRxiv (2021). * contribute equally.</p>
 <p>Siqi Shen, Ye Zheng* and Sündüz Keleş<em>, scGAD: single-cell gene associating domain scores for exploratory analysis of scHi-C data. bioRxiv (2021). </em> corresponding authors.</p>
-<div id="what-is-bandnorm" class="section level2">
-<h2 class="hasAnchor">
-<a href="#what-is-bandnorm" class="anchor"></a>What is BandNorm?</h2>
+<div class="section level2">
+<h2 id="what-is-bandnorm">What is BandNorm?<a class="anchor" aria-label="anchor" href="#what-is-bandnorm"></a>
+</h2>
 <p>The advent of single-cell sequencing technologies in profiling 3D genome organization led to development of single-cell high-throughput chromatin conformation (scHi-C) assays. Data from these assays enhance our ability to study dynamic chromatin architecture and the impact of spatial genome interactions on cell regulation at an unprecedented resolution. At the individual cell resolution, heterogeneity driven by the stochastic nature of chromatin fiber, various nuclear processes, and unwanted variation due to sequencing depths and batch effects poses major analytical challenges for inferring single cell-level 3D genome organizations.</p>
-<p>To explicitly capture chromatin conformation features and distinguish cells based on their 3D genome organizations, we develop a simple and fast band normalization approach, <code>BandNorm</code>, as well as a deep generative modeling framework, <a href="https://github.com/yezhengSTAT/3DVI">3DVI</a>, for more structured modeling of scHi-C data. <code>BandNorm</code> first removes genomic distance bias within a cell, and sequencing depth normalizes between cells. Consequently, <code>BandNorm</code> adds back a common band-dependent contact decay profile for the contact matrices across cells. The former step is achieved by dividing the interaction frequencies of each band within a cell with the cell’s band mean. The latter step is implemented by multiplying each scaled band by the average band mean across cells.</p>
+<p>To explicitly capture chromatin conformation features and distinguish cells based on their 3D genome organizations, we develop a simple and fast band normalization approach, <code>BandNorm</code>, as well as a deep generative modeling framework, <a href="https://github.com/yezhengSTAT/3DVI" class="external-link">3DVI</a>, for more structured modeling of scHi-C data. <code>BandNorm</code> first removes genomic distance bias within a cell, and sequencing depth normalizes between cells. Consequently, <code>BandNorm</code> adds back a common band-dependent contact decay profile for the contact matrices across cells. The former step is achieved by dividing the interaction frequencies of each band within a cell with the cell’s band mean. The latter step is implemented by multiplying each scaled band by the average band mean across cells.</p>
 <p><img src="./figures/bandnorm_intro.png" alt="BandNorm" width="700px"></p>
 </div>
-<div id="what-is-scgad" class="section level2">
-<h2 class="hasAnchor">
-<a href="#what-is-scgad" class="anchor"></a>What is scGAD?</h2>
+<div class="section level2">
+<h2 id="what-is-scgad">What is scGAD?<a class="anchor" aria-label="anchor" href="#what-is-scgad"></a>
+</h2>
 <p>Recent advancements in single-cell technologies enabled the profiling of 3D genome structures in a single-cell fashion. Quantitative tools are needed to fully leverage the unprecedented resolution of single-cell high-throughput chromatin conformation (scHi-C) data and integrate it with other single-cell data modalities. We present single-cell gene associating domain (scGAD) scores as a dimension reduction and exploratory analysis tool for scHi-C data. scGAD enables summarization at the gene level while accounting for inherent gene-level genomic biases. Low-dimensional projections with scGAD capture clustering of cells based on their 3D structures. scGAD enables identifying genes with significant chromatin interactions within and between cell types. We further show that scGAD facilitates the integration of scHi-C data with other single-cell data modalities by enabling its projection onto reference low-dimensional embeddings such as scRNA-seq.</p>
 <p><img src="./figures/Fig1A.png" alt="BandNorm" width="700px"></p>
 <p>There are seven functions, <code>download_schic</code>, <code>bandnorm</code>, <code>bandnorm_juicer</code>, <code>create_embedding</code>, and <code>plot_embedding</code>, <code>scGAD</code> and <code>runProjection</code>. <code>download_schic</code> downloads one of the currently available single-cell Hi-C data cleaned by us, <code>bandnorm</code> takes in sparse matrices and normalize them using BandNorm method, and <code>bandnorm_juicer</code> allows using .hic data to perform BandNorm, <code>create_embedding</code> summarizes the data into a PCA embedding in preparation for clustering and lower dimension embedding, <code>plot_embedding</code> calculates UMAP or tSNE embedding from the PCA obtained from <code>create_embedding</code>, and plots the resulting embedding. <code>scGAD</code> obtains scGAD score from single-cell Hi-C data, and <code>runProjection</code> projects scGAD score on other single-cell modalities.</p>
-<p>(See vignette (<code>browseVignettes("BandNorm"))</code> or visit <a href="https://sshen82.github.io/BandNorm">BandNorm website</a> for more detail.)</p>
+<p>(See vignette (<code>browseVignettes("BandNorm"))</code> or visit <a href="https://sshen82.github.io/BandNorm" class="external-link">BandNorm website</a> for more detail.)</p>
 </div>
-<div id="installation" class="section level2">
-<h2 class="hasAnchor">
-<a href="#installation" class="anchor"></a>Installation</h2>
+<div class="section level2">
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h2>
 <p>If necessary, install the dependencies:</p>
-<pre><code><a href="https://rdrr.io/r/utils/install.packages.html">install.packages(c('ggplot2', 'dplyr', 'data.table', 'Rtsne', 'umap'))
+<pre><code><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">'ggplot2'</span>, <span class="st">'dplyr'</span>, <span class="st">'data.table'</span>, <span class="st">'Rtsne'</span>, <span class="st">'umap'</span><span class="op">)</span><span class="op">)</span>
 
-if (!requireNamespace("devtools", quietly=TRUE))
-    install.packages("devtools")
+<span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"devtools"</span>, quietly<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span>
+    <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"devtools"</span><span class="op">)</span>
 
-library(devtools)
-install_github("immunogenomics/harmony")</a></code></pre>
-<p><code>BandNorm</code> can be installed from Github (User can change build_vignettes to TRUE to locally compile the vignettes. Note that the vignettes are also available online at BandNorm tutorial and scGAD tutorial (<a href="https://sshen82.github.io/BandNorm/index.html">BandNorm Method for single-cell Hi-C • BandNorm (sshen82.github.io)</a>):</p>
-<pre><code><a href="https://devtools.r-lib.org//reference/remote-reexports.html">devtools::install_github('sshen82/BandNorm', build_vignettes = FALSE)
-library(BandNorm)</a></code></pre>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://devtools.r-lib.org/" class="external-link">devtools</a></span><span class="op">)</span>
+<span class="fu"><a href="https://devtools.r-lib.org/reference/remote-reexports.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"immunogenomics/harmony"</span><span class="op">)</span></code></pre>
+<p><code>BandNorm</code> can be installed from Github (User can change build_vignettes to TRUE to locally compile the vignettes. Note that the vignettes are also available online at BandNorm tutorial and scGAD tutorial (<a href="https://sshen82.github.io/BandNorm/index.html" class="external-link">BandNorm Method for single-cell Hi-C • BandNorm (sshen82.github.io)</a>):</p>
+<pre><code><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://devtools.r-lib.org/reference/remote-reexports.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">'sshen82/BandNorm'</span>, build_vignettes <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">BandNorm</span><span class="op">)</span></code></pre>
 <p>Also, if the user doesn’t have default R path writing permission, it is possible to install the package to the personal library:</p>
-<pre><code><a href="https://withr.r-lib.org/reference/with_libpaths.html">withr::with_libpaths("personalLibraryPath", devtools::install_github("sshen82/BandNorm"))</a></code></pre>
+<pre><code><span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_libpaths.html" class="external-link">with_libpaths</a></span><span class="op">(</span><span class="st">"personalLibraryPath"</span>, <span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://devtools.r-lib.org/reference/remote-reexports.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"sshen82/BandNorm"</span><span class="op">)</span><span class="op">)</span></code></pre>
 <p>Below are the outputs of the code in the vignette.</p>
 <p><img src="./figures/cell_type.png" alt="celltype" width="700px"></p>
 <p><img src="./figures/batch.png" alt="batch" width="700px"></p>
-<p>For more detail, please visit <a href="https://sshen82.github.io/BandNorm">BandNorm website</a>.</p>
+<p>For more detail, please visit <a href="https://sshen82.github.io/BandNorm" class="external-link">BandNorm website</a>.</p>
 </div>
 </div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <div class="license">
-<h2>License</h2>
+<h2 data-toc-skip>License</h2>
 <ul class="list-unstyled">
 <li>
-<a href="https://opensource.org/licenses/mit-license.php">MIT</a> + file <a href="LICENSE-text.html">LICENSE</a>
+<a href="https://opensource.org/licenses/mit-license.php" class="external-link">MIT</a> + file <a href="LICENSE-text.html">LICENSE</a>
 </li>
 </ul>
 </div>
+
+
+<div class="citation">
+<h2 data-toc-skip>Citation</h2>
+<ul class="list-unstyled">
+<li><a href="authors.html#citation">Citing BandNorm</a></li>
+</ul>
+</div>
+
 <div class="developers">
-<h2>Developers</h2>
+<h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
 <li>Siqi Shen <br><small class="roles"> Maintainer </small>  </li>
 </ul>
 </div>
+
+
 
   </div>
 </div>
 
 
       <footer><div class="copyright">
-  <p>Developed by Siqi Shen.</p>
+  <p></p>
+<p>Developed by Siqi Shen.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
 </div>
 
       </footer>
@@ -160,6 +169,8 @@ library(BandNorm)</a></code></pre>
 
   
 
+
+  
 
   </body>
 </html>

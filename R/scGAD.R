@@ -14,17 +14,14 @@
 #' @examples
 #' #
 
-scGADNew = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 4, threads = 8, binPair = TRUE, format = "short", res = 10000){
+scGAD = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 4, threads = 8, binPair = TRUE, format = "short", res = 10000){
   setDTthreads(threads)
   discardCounts = max(genes$s2 - genes$s1)
   genes$s1 <- ifelse(genes$strand == "+", genes$s1 - 1000, genes$s1)
   genes$s2 <- ifelse(genes$strand == "-", genes$s2, genes$s2 + 1000)
   colnames(genes) = c("chr", "start", "end", "strand", "names")
-  genes = makeGRangesFromDataFrame(genes, keep.extra.columns=TRUE) 
-  cl <- makeCluster(cores)
-  clusterEvalQ(cl, {library(data.table)
-    library(GenomicInteractions)
-  })
+  genes = makeGRangesFromDataFrame(genes, keep.extra.columns=TRUE)
+
   if (is.null(hic_df)){
     if (binPair){
       names = list.files(path)
@@ -34,9 +31,9 @@ scGADNew = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores =
         colnames(cell) = c("V1", "V2", "V4", "V5")
         cell = cell[abs(V4 - V2) <= discardCounts]
         GInt = GenomicInteractions(GRanges(cell$V1,
-                                           IRanges(cell$V2, width = res)), 
+                                           IRanges(cell$V2, width = res)),
                                    GRanges(cell$V1,
-                                           IRanges(cell$V4, width = res)), 
+                                           IRanges(cell$V4, width = res)),
                                    counts = cell$V5)
         one <- overlapsAny(anchorOne(GInt), genes)
         two <- overlapsAny(anchorTwo(GInt), genes)
@@ -51,8 +48,12 @@ scGADNew = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores =
         colnames(dat) = c("names", names[k])
         dat
       }
+      cl <- makeCluster(cores)
+      clusterEvalQ(cl, {library(data.table)
+        library(GenomicInteractions)
+      })
       output <- parLapply(cl, 1:length(names), getCount)
-      output = Reduce(full_join, output)
+      output = suppressMessages(Reduce(full_join, output))
       output[is.na(output)] = 0
     }
     else {
@@ -76,9 +77,9 @@ scGADNew = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores =
         colnames(cell) = c("V1", "V2", "V4")
         cell = cell[abs(V4 - V2) <= discardCounts]
         GInt = GenomicInteractions(GRanges(cell$V1,
-                                           IRanges(cell$V2, width = res)), 
+                                           IRanges(cell$V2, width = res)),
                                    GRanges(cell$V1,
-                                           IRanges(cell$V4, width = res)), 
+                                           IRanges(cell$V4, width = res)),
                                    counts = 1)
         one <- overlapsAny(anchorOne(GInt), genes)
         two <- overlapsAny(anchorTwo(GInt), genes)
@@ -93,21 +94,24 @@ scGADNew = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores =
         colnames(dat) = c("names", names[k])
         dat
       }
+      cl <- makeCluster(cores)
+      clusterEvalQ(cl, {library(data.table)
+        library(GenomicInteractions)
+      })
       output <- parLapply(cl, 1:length(names), getCount)
-      output = Reduce(full_join, output)
+      output = suppressMessages(Reduce(full_join, output))
       output[is.na(output)] = 0
     }
   } else{
     hic_df = setDT(hic_df)
     names = unique(hic_df$cell)
     getCount = function(k){
-      setkey(hic_df, cell)
-      cell = hic_df[J(names[k])]
-      cell = cell[abs(binA - binB) <= discardCounts]
+      library(data.table)
+      cell = hic_df[hic_df$cell == names[k], ]
       GInt = GenomicInteractions(GRanges(cell$chrom,
-                                         IRanges(cell$binA, width = res)), 
+                                         IRanges(cell$binA, width = res)),
                                  GRanges(cell$chrom,
-                                         IRanges(cell$binB, width = res)), 
+                                         IRanges(cell$binB, width = res)),
                                  counts = cell$count)
       one <- overlapsAny(anchorOne(GInt), genes)
       two <- overlapsAny(anchorTwo(GInt), genes)
@@ -117,21 +121,25 @@ scGADNew = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores =
       hits$two <- findOverlaps(anchorTwo(x.valid), genes, select = "first")
       counts = data.table(reads = x.valid$counts[hits[[1]] == hits[[2]]], pos = hits$one[hits$one == hits$two])
       tabulated <- unique(counts$pos)
-      counts <- setDT(counts)[,.(reads = sum(reads)), by = 'pos']$reads
+      counts <- aggregate(reads ~ pos, data = counts, FUN = sum)$reads
       dat = data.table(names = genes[unique(tabulated)]$names, counts = counts)
       colnames(dat) = c("names", names[k])
       dat
     }
+    cl <- makeCluster(cores)
+    clusterEvalQ(cl, {library(data.table)
+                      library(GenomicInteractions)
+                     })
     output <- parLapply(cl, 1:length(names), getCount)
-    output = Reduce(full_join, output)
+    output = suppressMessages(Reduce(full_join, output))
     output[is.na(output)] = 0
   }
-  output
-  colnames(output) = names
-  rownames(output) = genes$gene_name
+  finNames = output$names
+  output = as.matrix(output[, -1])
+  rownames(output) = finNames
   output = output[rowSums(output) > 0, ]
   output = output[!is.na(rowSums(output)), ]
-  
+
   if (depthNorm) {
     output = t(t(output) / colSums(output)) * 1e04
   }
@@ -143,7 +151,7 @@ scGADNew = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores =
 #' Performing Projection for scGAD on other single-cell data
 #'
 #' This function allows you to project scGAD value on various assays.
-#' @param DataList A list of matrices containing all assays. Each matrix should have a name that corresponds to the assay. 
+#' @param DataList A list of matrices containing all assays. Each matrix should have a name that corresponds to the assay.
 #' @param doNorm A vector of boolean. Each entries determines whether each matrix should be normalized.
 #' @export
 #' @examples
@@ -172,19 +180,19 @@ runProjection = function(DataList, doNorm, cellTypeList){
     DefaultAssay(s) = "RNA"
     GADList[[i]] = s
   }
-  
   GADList <- lapply(X = GADList, FUN = function(x) {
     x <- FindVariableFeatures(x, selection.method = "mean.var.plot", nfeatures = 2500)
   })
+  print(1)
   features <- SelectIntegrationFeatures(object.list = GADList)
   suppressWarnings(getAnchors <- FindIntegrationAnchors(object.list = GADList, anchor.features = features,
                                                         k.filter = 50))
-  suppressWarnings(getCombined <- IntegrateData(anchorset = getAnchors))
+  suppressWarnings(getCombined <- IntegrateData(anchorset = getAnchors, k.weight = 80))
 
   DefaultAssay(getCombined) <- "integrated"
 
   suppressWarnings(getCombined <- ScaleData(getCombined, verbose = FALSE))
-  getCombined <- RunPCA(getCombined, npcs = 5, verbose = FALSE)
+  getCombined <- RunPCA(getCombined, npcs = 15, verbose = FALSE)
   getCombined <- RunUMAP(getCombined, reduction = "pca", dims = 1:5)
   getCombined
 }

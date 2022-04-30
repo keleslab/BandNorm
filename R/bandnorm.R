@@ -232,7 +232,8 @@ create_embedding = function(path = NULL, hic_df = NULL, chrs = paste0("chr", c(1
         stop("The batch file should only contain two columns, the first is cell names and the second is batch information.")
       }
     }
-    hic_df = hic_df[diag != 0]
+    setDT(hic_df)
+    hic_df = hic_df[hic_df$diag != 0, ]
     names = unique(hic_df$cell)
     n = length(names)
     hic_df$cell = as.numeric(factor(hic_df$cell, level = names))
@@ -264,7 +265,6 @@ create_embedding = function(path = NULL, hic_df = NULL, chrs = paste0("chr", c(1
         stop("The batch file should only contain two columns, the first is cell names and the second is batch information.")
       }
     }
-    cell_names = names
     load_cell = function(i) {
       return(fread(paths[i], select = c(1, 2, 4, 5))[V2 - V4 != 0 & V1 == chrs[c]] %>% 
                mutate(cellIndex = i, featureIndex = paste(V2, V4, sep = "_")) %>%
@@ -301,7 +301,7 @@ create_embedding = function(path = NULL, hic_df = NULL, chrs = paste0("chr", c(1
   if (do_harmony) {
     colnames(batch) = c("cell_name", "batch")
     batch = data.frame(batch)
-    batch = batch[match(cell_names, batch$cell_name), ]$batch
+    batch = batch[match(names, batch$cell_name), ]$batch
     pca_mat <- harmony::HarmonyMatrix(pca_mat, batch, "dataset", do_pca = FALSE)
     pca_mat = (pca_mat)[, 1:dim_pca]
   }

@@ -1,10 +1,10 @@
 pandoc: 2.11.2
-pkgdown: 1.6.1
+pkgdown: 2.0.3
 pkgdown_sha: ~
 articles:
   BandNorm-tutorial: BandNorm-tutorial.html
   scGAD_tutorial: scGAD_tutorial.html
-last_built: 2021-11-02T03:44Z
+last_built: 2022-04-30T05:43Z
 urls:
   reference: http://sshen82.github.io/BandNorm/reference
   article: http://sshen82.github.io/BandNorm/articles

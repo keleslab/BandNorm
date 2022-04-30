@@ -10,7 +10,10 @@ scGAD(
   genes,
   depthNorm = TRUE,
   cores = 4,
-  threads = 8
+  threads = 8,
+  binPair = TRUE,
+  format = "short",
+  res = 10000
 )
 }
 \arguments{
@@ -25,6 +28,12 @@ scGAD(
 \item{cores}{Number of cores used for parallel running. Default is 4.}
 
 \item{threads}{Number of threads for fread function, default is 8.}
+
+\item{binPair}{Use bin pair or valid reads. The former is faster since it is already binned, but the latter will be more accurate. Default is TRUE.}
+
+\item{format}{The format of the valid pairs. "short", "medium", "long", "4DN" are supported. See https://github.com/aidenlab/juicer/wiki/Pre.}
+
+\item{res}{The resolution of the data. Used only when binPair = TRUE. Default is 10000.}
 }
 \description{
 This function allows you to calculate GAD value for each gene in each cell.

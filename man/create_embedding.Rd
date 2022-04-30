@@ -7,12 +7,10 @@
 create_embedding(
   path = NULL,
   hic_df = NULL,
-  mean_thres = 0,
-  var_thres = 0,
+  chrs = paste0("chr", c(1:19, "X")),
   dim_pca = 50,
   do_harmony = FALSE,
-  batch = NULL,
-  band_select = "all"
+  batch = NULL
 )
 }
 \arguments{
@@ -20,17 +18,13 @@ create_embedding(
 
 \item{hic_df}{After using bandnorm, if you keep the data frame, it is possible to use this instead of "path" as input of create_embedding. If using hic_df, the speed will be faster, but is costs more memory.}
 
-\item{mean_thres}{The proportion of low mean interactions to be filtered. Ranges from 0 to 1, default is 0.}
-
-\item{var_thres}{The proportion of low variance interactions to be filtered. Ranges from 0 to 1, default is 0.}
+\item{chrs}{Chromosomes used in the embedding. Default is chr1, ..., chr19, and chrX.}
 
 \item{dim_pca}{Dimension of PCA embedding to be outputted. Default is 50.}
 
 \item{do_harmony}{Whether to use Harmony to remove the batch effect from the embedding. Default is FALSE}
 
 \item{batch}{The batch information used for Harmony to remove the batch effect. Required if do_harmony is TRUE.}
-
-\item{band_select}{Choose how faraway the band you need. Default is "all", and it can range from 1 to the number of bins times the resolution.}
 }
 \description{
 This function allows you to obtain the PCA embedding for tSNE or UMAP plotting.
