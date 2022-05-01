@@ -57,8 +57,8 @@ scGAD = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 4,
       output[is.na(output)] = 0
     }
     else {
-      names = list.files(path)
-      paths = list.files(path, full.names = TRUE)
+      names = basename(list.files(path, recursive = TRUE))
+      paths = list.files(path, full.names = TRUE, recursive = TRUE)
       getCount = function(k){
         cell = fread(paths[k])
         if (format == "short"){
