@@ -16,7 +16,6 @@
 
 scGAD = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 4, threads = 8, binPair = TRUE, format = "short", res = 10000){
   setDTthreads(threads)
-  discardCounts = max(genes$s2 - genes$s1)
   genes$s1 <- ifelse(genes$strand == "+", genes$s1 - 1000, genes$s1)
   genes$s2 <- ifelse(genes$strand == "-", genes$s2, genes$s2 + 1000)
   colnames(genes) = c("chr", "start", "end", "strand", "names")
@@ -29,7 +28,6 @@ scGAD = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 4,
       getCount = function(k){
         cell = fread(paths[k], select = c(1, 2, 4, 5))
         colnames(cell) = c("V1", "V2", "V4", "V5")
-        cell = cell[abs(V4 - V2) <= discardCounts]
         GInt = GenomicInteractions(GRanges(cell$V1,
                                            IRanges(cell$V2, width = res)),
                                    GRanges(cell$V1,
@@ -75,7 +73,6 @@ scGAD = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 4,
           cell = cell[, c(2, 3, 5)]
         }
         colnames(cell) = c("V1", "V2", "V4")
-        cell = cell[abs(V4 - V2) <= discardCounts]
         GInt = GenomicInteractions(GRanges(cell$V1,
                                            IRanges(cell$V2, width = res)),
                                    GRanges(cell$V1,
