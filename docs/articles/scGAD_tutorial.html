@@ -183,7 +183,9 @@ chr1    20000   40000   2       cell_3</code></pre>
 <span class="co">#&gt; Warning: package 'Matrix' was built under R version 4.0.5</span>
 <span class="co">#&gt; Loading required package: gmodels</span>
 <span class="co">#&gt; Warning: package 'gmodels' was built under R version 4.0.4</span>
-<span class="co">#&gt; Loading required package: parallel</span>
+<span class="co">#&gt; Loading required package: furrr</span>
+<span class="co">#&gt; Warning: package 'furrr' was built under R version 4.0.5</span>
+<span class="co">#&gt; Loading required package: future</span>
 <span class="co">#&gt; Loading required package: matrixStats</span>
 <span class="co">#&gt; Warning: package 'matrixStats' was built under R version 4.0.5</span>
 <span class="co">#&gt; </span>
@@ -197,6 +199,11 @@ chr1    20000   40000   2       cell_3</code></pre>
 <span class="co">#&gt; Loading required package: strawr</span>
 <span class="co">#&gt; Warning: package 'strawr' was built under R version 4.0.5</span>
 <span class="co">#&gt; Loading required package: rmarkdown</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Attaching package: 'rmarkdown'</span>
+<span class="co">#&gt; The following object is masked from 'package:future':</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt;     run</span>
 <span class="co">#&gt; Loading required package: viridis</span>
 <span class="co">#&gt; Warning: package 'viridis' was built under R version 4.0.5</span>
 <span class="co">#&gt; Loading required package: viridisLite</span>
@@ -211,6 +218,7 @@ chr1    20000   40000   2       cell_3</code></pre>
 <span class="co">#&gt; Loading required package: stats4</span>
 <span class="co">#&gt; Loading required package: BiocGenerics</span>
 <span class="co">#&gt; Warning: package 'BiocGenerics' was built under R version 4.0.5</span>
+<span class="co">#&gt; Loading required package: parallel</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Attaching package: 'BiocGenerics'</span>
 <span class="co">#&gt; The following objects are masked from 'package:parallel':</span>
@@ -236,6 +244,9 @@ chr1    20000   40000   2       cell_3</code></pre>
 <span class="co">#&gt; Warning: package 'S4Vectors' was built under R version 4.0.3</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Attaching package: 'S4Vectors'</span>
+<span class="co">#&gt; The following object is masked from 'package:future':</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt;     values</span>
 <span class="co">#&gt; The following object is masked from 'package:Matrix':</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt;     expand</span>
@@ -317,7 +328,18 @@ chr1    20000   40000   2       cell_3</code></pre>
 <span class="fu"><a href="https://rdrr.io/r/base/load.html" class="external-link">load</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/connections.html" class="external-link">close</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span>
 
-<span class="va">gad_score</span> <span class="op">=</span> <span class="fu"><a href="../reference/scGAD.html">scGAD</a></span><span class="op">(</span>hic_df <span class="op">=</span> <span class="va">scgad_df</span>, genes <span class="op">=</span> <span class="va">geneANNO</span>, depthNorm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
+<span class="va">gad_score</span> <span class="op">=</span> <span class="fu"><a href="../reference/scGAD.html">scGAD</a></span><span class="op">(</span>hic_df <span class="op">=</span> <span class="va">scgad_df</span>, genes <span class="op">=</span> <span class="va">geneANNO</span>, depthNorm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Attaching package: 'purrr'</span>
+<span class="co">#&gt; The following object is masked from 'package:GenomicRanges':</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt;     reduce</span>
+<span class="co">#&gt; The following object is masked from 'package:IRanges':</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt;     reduce</span>
+<span class="co">#&gt; The following object is masked from 'package:data.table':</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt;     transpose</span></code></pre></div>
 <p>A successful <code>scGAD</code> run will give you the scGAD scores like the following. <code>gad_score</code> for the demo data run is a 2395 x 350 matrix.</p>
 <pre><code>&gt; head(gad_score)
         cell_1    cell_2    cell_3 ... ...
@@ -400,20 +422,20 @@ Rgs20   -0.14     -1.25     0.16   ... ...</code></pre>
 <span class="co">#&gt; Warning: The default method for RunUMAP has changed from calling Python UMAP via reticulate to the R-native UWOT using the cosine metric</span>
 <span class="co">#&gt; To use Python UMAP via reticulate, set umap.method to 'umap-learn' and metric to 'correlation'</span>
 <span class="co">#&gt; This message will be shown once per session</span>
-<span class="co">#&gt; 00:45:28 UMAP embedding parameters a = 0.9922 b = 1.112</span>
-<span class="co">#&gt; 00:45:28 Read 1426 rows and found 5 numeric columns</span>
-<span class="co">#&gt; 00:45:28 Using Annoy for neighbor search, n_neighbors = 30</span>
-<span class="co">#&gt; 00:45:28 Building Annoy index with metric = cosine, n_trees = 50</span>
+<span class="co">#&gt; 14:46:37 UMAP embedding parameters a = 0.9922 b = 1.112</span>
+<span class="co">#&gt; 14:46:37 Read 1426 rows and found 5 numeric columns</span>
+<span class="co">#&gt; 14:46:37 Using Annoy for neighbor search, n_neighbors = 30</span>
+<span class="co">#&gt; 14:46:37 Building Annoy index with metric = cosine, n_trees = 50</span>
 <span class="co">#&gt; 0%   10   20   30   40   50   60   70   80   90   100%</span>
 <span class="co">#&gt; [----|----|----|----|----|----|----|----|----|----|</span>
 <span class="co">#&gt; **************************************************|</span>
-<span class="co">#&gt; 00:45:28 Writing NN index file to temp file C:\Users\solei\AppData\Local\Temp\RtmpwjSYuy\file14a4149e2518</span>
-<span class="co">#&gt; 00:45:28 Searching Annoy index using 1 thread, search_k = 3000</span>
-<span class="co">#&gt; 00:45:29 Annoy recall = 100%</span>
-<span class="co">#&gt; 00:45:30 Commencing smooth kNN distance calibration using 1 thread</span>
-<span class="co">#&gt; 00:45:31 Initializing from normalized Laplacian + noise</span>
-<span class="co">#&gt; 00:45:31 Commencing optimization for 500 epochs, with 55344 positive edges</span>
-<span class="co">#&gt; 00:45:35 Optimization finished</span>
+<span class="co">#&gt; 14:46:38 Writing NN index file to temp file C:\Users\solei\AppData\Local\Temp\Rtmpwz67WL\file1a14298f3d72</span>
+<span class="co">#&gt; 14:46:38 Searching Annoy index using 4 threads, search_k = 3000</span>
+<span class="co">#&gt; 14:46:38 Annoy recall = 100%</span>
+<span class="co">#&gt; 14:46:38 Commencing smooth kNN distance calibration using 4 threads</span>
+<span class="co">#&gt; 14:46:40 Initializing from normalized Laplacian + noise</span>
+<span class="co">#&gt; 14:46:40 Commencing optimization for 500 epochs, with 55188 positive edges</span>
+<span class="co">#&gt; 14:46:43 Optimization finished</span>
 
 <span class="va">p_celltype</span> <span class="op">=</span> <span class="fu"><a href="https://satijalab.org/seurat/reference/DimPlot.html" class="external-link">DimPlot</a></span><span class="op">(</span><span class="va">combinedAssay</span>, reduction <span class="op">=</span> <span class="st">"umap"</span>, label <span class="op">=</span> <span class="cn">TRUE</span>, repel <span class="op">=</span> <span class="cn">TRUE</span>, 
                     pt.size <span class="op">=</span> <span class="fl">1.3</span>, shape.by <span class="op">=</span> <span class="st">"method"</span>, label.size <span class="op">=</span> <span class="fl">6</span><span class="op">)</span> <span class="op">+</span>

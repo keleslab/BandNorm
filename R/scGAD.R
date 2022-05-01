@@ -16,18 +16,19 @@
 
 scGAD = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 4, threads = 8, binPair = TRUE, format = "short", res = 10000){
   setDTthreads(threads)
+  discardCounts = max(genes$s2 - genes$s1)
   genes$s1 <- ifelse(genes$strand == "+", genes$s1 - 1000, genes$s1)
   genes$s2 <- ifelse(genes$strand == "-", genes$s2, genes$s2 + 1000)
   colnames(genes) = c("chr", "start", "end", "strand", "names")
   genes = makeGRangesFromDataFrame(genes, keep.extra.columns=TRUE)
-
   if (is.null(hic_df)){
     if (binPair){
-      names = basename(list.files(path, recursive = TRUE))
-      paths = list.files(path, full.names = TRUE, recursive = TRUE)
+      names = basename(list.files(path, recursive = TRUE))[1:5]
+      paths = list.files(path, full.names = TRUE, recursive = TRUE)[1:5]
       getCount = function(k){
         cell = fread(paths[k], select = c(1, 2, 4, 5))
         colnames(cell) = c("V1", "V2", "V4", "V5")
+        cell = cell[abs(V4 - V2) <= discardCounts]
         GInt = GenomicInteractions(GRanges(cell$V1,
                                            IRanges(cell$V2, width = res)),
                                    GRanges(cell$V1,
@@ -46,11 +47,8 @@ scGAD = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 4,
         colnames(dat) = c("names", names[k])
         dat
       }
-      cl <- makeCluster(cores)
-      clusterEvalQ(cl, {library(data.table)
-        library(GenomicInteractions)
-      })
-      output <- parLapply(cl, 1:length(names), getCount)
+      plan(multicore, workers = cores)
+      output <- future_map(1:length(names), getCount)
       output = suppressMessages(Reduce(full_join, output))
       output[is.na(output)] = 0
     }
@@ -73,6 +71,7 @@ scGAD = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 4,
           cell = cell[, c(2, 3, 5)]
         }
         colnames(cell) = c("V1", "V2", "V4")
+        cell = cell[abs(V4 - V2) <= discardCounts]
         GInt = GenomicInteractions(GRanges(cell$V1,
                                            IRanges(cell$V2, width = res)),
                                    GRanges(cell$V1,
@@ -91,11 +90,8 @@ scGAD = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 4,
         colnames(dat) = c("names", names[k])
         dat
       }
-      cl <- makeCluster(cores)
-      clusterEvalQ(cl, {library(data.table)
-        library(GenomicInteractions)
-      })
-      output <- parLapply(cl, 1:length(names), getCount)
+      plan(multicore, workers = cores)
+      output <- future_map(1:length(names), getCount)
       output = suppressMessages(Reduce(full_join, output))
       output[is.na(output)] = 0
     }
@@ -103,8 +99,8 @@ scGAD = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 4,
     hic_df = setDT(hic_df)
     names = unique(hic_df$cell)
     getCount = function(k){
-      library(data.table)
-      cell = hic_df[hic_df$cell == names[k], ]
+      cell = hic_df[cell == names[k]]
+      cell = cell[abs(binB - binA) <= discardCounts]
       GInt = GenomicInteractions(GRanges(cell$chrom,
                                          IRanges(cell$binA, width = res)),
                                  GRanges(cell$chrom,
@@ -123,11 +119,8 @@ scGAD = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 4,
       colnames(dat) = c("names", names[k])
       dat
     }
-    cl <- makeCluster(cores)
-    clusterEvalQ(cl, {library(data.table)
-                      library(GenomicInteractions)
-                     })
-    output <- parLapply(cl, 1:length(names), getCount)
+    plan(multicore, workers = cores)
+    output <- future_map(1:length(names), getCount)
     output = suppressMessages(Reduce(full_join, output))
     output[is.na(output)] = 0
   }
@@ -136,7 +129,6 @@ scGAD = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 4,
   rownames(output) = finNames
   output = output[rowSums(output) > 0, ]
   output = output[!is.na(rowSums(output)), ]
-
   if (depthNorm) {
     output = t(t(output) / colSums(output)) * 1e04
   }
