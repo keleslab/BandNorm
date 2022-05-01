@@ -24,8 +24,8 @@ scGAD = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 4,
 
   if (is.null(hic_df)){
     if (binPair){
-      names = list.files(path)
-      paths = list.files(path, full.names = TRUE)
+      names = basename(list.files(path, recursive = TRUE))
+      paths = list.files(path, full.names = TRUE, recursive = TRUE)
       getCount = function(k){
         cell = fread(paths[k], select = c(1, 2, 4, 5))
         colnames(cell) = c("V1", "V2", "V4", "V5")
