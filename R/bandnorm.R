@@ -247,7 +247,6 @@ create_embedding = function(path = NULL, hic_df = NULL, chrs = paste0("chr", c(1
       hic_dfCHR = sparseMatrix(i = hic_dfCHR$cell, j = hic_dfCHR$featureIndex, x = hic_dfCHR$BandNorm, 
                                dims = c(max(hic_dfCHR$cell), max(hic_dfCHR$featureIndex)),
                                index1 = TRUE)
-      rownames(hic_dfCHR) = names
       output[[chrs[c]]] = hic_dfCHR
     }
   } else {
@@ -277,7 +276,6 @@ create_embedding = function(path = NULL, hic_df = NULL, chrs = paste0("chr", c(1
       hic_df = sparseMatrix(i = hic_df$cellIndex, j = hic_df$featureIndex, x = hic_df$V5, 
                             dims = c(max(hic_df$cellIndex), max(hic_df$featureIndex)),
                             index1 = TRUE)
-      rownames(hic_df) = names
       output[[chrs[c]]] = hic_df
     }
   }
