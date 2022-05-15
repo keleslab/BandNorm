@@ -89,7 +89,7 @@ bandnorm = function(path = NULL, hic_df = NULL, save = TRUE, save_path = NULL) {
     names = basename(list.files(path, recursive = TRUE))
     # The input format of the cell should be [chr1, bin1, chr2, bin2, count].
     load_cell = function(i) {
-      return(fread(paths[i]) %>% rename(chrom = V1, binA = V2, binB = V4, count = V5) %>%
+      return(fread(paths[i]) %>% dplyr::rename(chrom = V1, binA = V2, binB = V4, count = V5) %>%
                mutate(diag = abs(binB - binA), cell = names[i]) %>% select(-V3))
     }
     hic_df = rbindlist(lapply(1:length(paths), load_cell))
