@@ -245,7 +245,7 @@ create_embedding = function(path = NULL, hic_df = NULL, chrs = paste0("chr", c(1
       hic_dfCHR = hic_df[chrom == chrs[c], ]
       hic_dfCHR$featureIndex = as.numeric(factor(hic_dfCHR$featureIndex))
       hic_dfCHR = sparseMatrix(i = hic_dfCHR$cell, j = hic_dfCHR$featureIndex, x = hic_dfCHR$BandNorm, 
-                               dims = c(max(hic_dfCHR$cell), max(hic_dfCHR$featureIndex)),
+                               dims = c(max(hic_df$cell), max(hic_dfCHR$featureIndex)),
                                index1 = TRUE)
       output[[chrs[c]]] = hic_dfCHR
     }
