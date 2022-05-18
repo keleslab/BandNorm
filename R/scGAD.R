@@ -122,6 +122,7 @@ scGAD = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 4,
     output <- future_sapply(1:length(names), getCount)
     output[is.na(output)] = 0
   }
+  rownames(output) = g_names
   colnames(output) = names
   output = output[rowSums(output) > 0, ]
   output = output[!is.na(rowSums(output)), ]
