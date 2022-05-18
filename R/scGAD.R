@@ -21,10 +21,11 @@ scGAD = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 4,
   genes$s2 <- ifelse(genes$strand == "-", genes$s2, genes$s2 + 1000)
   colnames(genes) = c("chr", "start", "end", "strand", "names")
   genes = makeGRangesFromDataFrame(genes, keep.extra.columns=TRUE)
+  g_names = genes$names
   if (is.null(hic_df)){
     if (binPair){
-      names = basename(list.files(path, recursive = TRUE))[1:5]
-      paths = list.files(path, full.names = TRUE, recursive = TRUE)[1:5]
+      names = basename(list.files(path, recursive = TRUE))
+      paths = list.files(path, full.names = TRUE, recursive = TRUE)
       getCount = function(k){
         cell = fread(paths[k], select = c(1, 2, 4, 5))
         colnames(cell) = c("V1", "V2", "V4", "V5")
@@ -43,13 +44,12 @@ scGAD = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 4,
         counts = data.table(reads = x.valid$counts[hits[[1]] == hits[[2]]], pos = hits$one[hits$one == hits$two])
         tabulated <- unique(counts$pos)
         counts <- setDT(counts)[,.(reads = sum(reads)), by = 'pos']$reads
-        dat = data.table(names = genes[unique(tabulated)]$names, counts = counts)
-        colnames(dat) = c("names", names[k])
-        dat
+        dat = data.table(names = c(g_names[unique(tabulated)], g_names[-unique(tabulated)]), 
+                         counts = c(counts, rep(0, length(g_names) - length(unique(tabulated)))))
+        dat[match(g_names, dat$names), ]$counts
       }
       plan(multicore, workers = cores)
-      output <- future_map(1:length(names), getCount)
-      output = suppressMessages(Reduce(full_join, output))
+      output <- future_sapply(1:length(names), getCount)
       output[is.na(output)] = 0
     }
     else {
@@ -86,13 +86,12 @@ scGAD = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 4,
         counts = data.table(reads = x.valid$counts[hits[[1]] == hits[[2]]], pos = hits$one[hits$one == hits$two])
         tabulated <- unique(counts$pos)
         counts <- setDT(counts)[,.(reads = sum(reads)), by = 'pos']$reads
-        dat = data.table(names = genes[unique(tabulated)]$names, counts = counts)
-        colnames(dat) = c("names", names[k])
-        dat
+        dat = data.table(names = c(g_names[unique(tabulated)], g_names[-unique(tabulated)]), 
+                         counts = c(counts, rep(0, length(g_names) - length(unique(tabulated)))))
+        dat[match(g_names, dat$names), ]$counts
       }
       plan(multicore, workers = cores)
-      output <- future_map(1:length(names), getCount)
-      output = suppressMessages(Reduce(full_join, output))
+      output <- future_sapply(1:length(names), getCount)
       output[is.na(output)] = 0
     }
   } else{
@@ -115,18 +114,15 @@ scGAD = function(path = NULL, hic_df = NULL, genes, depthNorm = TRUE, cores = 4,
       counts = data.table(reads = x.valid$counts[hits[[1]] == hits[[2]]], pos = hits$one[hits$one == hits$two])
       tabulated <- unique(counts$pos)
       counts <- aggregate(reads ~ pos, data = counts, FUN = sum)$reads
-      dat = data.table(names = genes[unique(tabulated)]$names, counts = counts)
-      colnames(dat) = c("names", names[k])
-      dat
+      dat = data.table(names = c(g_names[unique(tabulated)], g_names[-unique(tabulated)]), 
+                       counts = c(counts, rep(0, length(g_names) - length(unique(tabulated)))))
+      dat[match(g_names, dat$names), ]$counts
     }
     plan(multicore, workers = cores)
-    output <- future_map(1:length(names), getCount)
-    output = suppressMessages(Reduce(full_join, output))
+    output <- future_sapply(1:length(names), getCount)
     output[is.na(output)] = 0
   }
-  finNames = output$names
-  output = as.matrix(output[, -1])
-  rownames(output) = finNames
+  colnames(output) = names
   output = output[rowSums(output) > 0, ]
   output = output[!is.na(rowSums(output)), ]
   if (depthNorm) {
