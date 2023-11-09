@@ -162,7 +162,7 @@ bandnorm_juicer = function(path = NULL, resolution, chroms, save = TRUE, save_pa
       temp = as.data.frame(cell$contact[[chroms[k]]])
       n = nrow(cell$contact[[chroms[k]]])
       temp$chromA = rep(paste("chr", chroms[k], sep = ""), n)
-      return(temp %>% select(chromA, x, y, counts) %>% rename(chrom = chromA, binA = x, binB = y, count = counts))
+      return(temp %>% select(chromA, x, y, counts) %>% dplyr::rename(chrom = chromA, binA = x, binB = y, count = counts))
     }
     return(rbindlist(lapply(1:length(chroms), clean_cell)) %>%
       mutate(diag = abs(binB - binA), cell = names[i]))
